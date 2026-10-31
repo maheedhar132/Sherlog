@@ -7,7 +7,7 @@ import { detectAlerts, observe } from '../sim/detect';
 import { FAULTS, FAULT_IDS, isCompatible } from '../sim/faults';
 import { FIXES, FIX_FOR, fixOptions, type FixId } from '../sim/fixes';
 import { queryCost, sameHypothesis } from '../sim/incident';
-import { pages } from '../sim/slo';
+import { ERROR_BUDGET_SECONDS, pages } from '../sim/slo';
 import type { FaultId, QueryKey, ServiceKind } from '../sim/types';
 import { CHANNEL_ICON, KIND_LABEL, describeQuery } from './labels';
 import { Modal } from './Modal';
@@ -19,8 +19,6 @@ type Tab = 'metrics' | 'logs' | 'traces' | 'deploys';
 
 const TAB_KEYS: Record<string, Tab> = { m: 'metrics', l: 'logs', t: 'traces', d: 'deploys' };
 const HINT_COST = 15;
-/** The SLO error budget is a 10 minute outage's worth: your clock burns it. */
-const ERROR_BUDGET_SECONDS = 600;
 const KIND_WORD: Record<ServiceKind, string> = {
   gateway: 'the gateway',
   app: 'an application service',
@@ -247,7 +245,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
         </div>
         <div className="incident-title">
           <div className="inc-id">
-            {setup.tutorial ? 'TRAINING' : setup.daily ? `DAILY #${setup.daily.number}` : `INC-${incident.seed}`} · {setup.mode.toUpperCase()}
+            {setup.tutorial ? 'TRAINING' : setup.shift ? `SHIFT ${setup.shift.n}/${setup.shift.of} · INC-${incident.seed}` : setup.daily ? `DAILY #${setup.daily.number}` : `INC-${incident.seed}`} · {setup.mode.toUpperCase()}
           </div>
           <div className="paging">
             🔔 PAGED 14:02 · {alerts.size ? `${alerts.size} alerting` : 'customers report problems, no alert fired'}

@@ -59,6 +59,9 @@ export interface Profile {
   dailyStats: DailyStats;
   /** Set once the guided first incident has been finished. */
   tutorialDone?: boolean;
+  /** Your best on-call shift: most incidents solved, then fastest total time. */
+  bestShift?: { solved: number; total: number; date: string };
+  shifts?: number;
 }
 
 export function newProfile(): Profile {

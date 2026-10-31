@@ -10,6 +10,7 @@ interface Props {
   onPlay: (mode: Mode) => void;
   onTutorial: () => void;
   onDaily: () => void;
+  onShift: (mode: Mode) => void;
   onOpenGuide: () => void;
   onImport: (json: string) => void;
   onExport: () => void;
@@ -32,7 +33,7 @@ const MODE_INFO: Record<Mode, { title: string; blurb: string }> = {
   hard: { title: 'Hard', blurb: 'Three red herrings, and a signal goes missing. A ruthless AI.' },
 };
 
-export function Home({ profile, onPlay, onTutorial, onDaily, onOpenGuide, onImport, onExport, onReset }: Props) {
+export function Home({ profile, onPlay, onTutorial, onDaily, onShift, onOpenGuide, onImport, onExport, onReset }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const placement = profile.played < PLACEMENT_MATCHES;
   const weakest = weakestFault(profile);
@@ -92,6 +93,19 @@ export function Home({ profile, onPlay, onTutorial, onDaily, onOpenGuide, onImpo
             </div>
           </button>
         ))}
+        <button className="mode-card shift" onClick={() => onShift('normal')}>
+          <h2>On-call shift</h2>
+          <p>Three incidents back to back. Your total time against the AI's.</p>
+          <div className="mode-meta">
+            {profile.bestShift ? (
+              <span>
+                best: {profile.bestShift.solved}/3 solved · {fmt(profile.bestShift.total)}
+              </span>
+            ) : (
+              <span>normal mode · 3 incidents</span>
+            )}
+          </div>
+        </button>
         <button className="mode-card daily" onClick={onDaily} disabled={!!dailyDone}>
           <h2>Daily incident</h2>
           <p>Same incident, same AI, for everyone today. Share your trail.</p>

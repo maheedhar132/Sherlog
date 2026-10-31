@@ -2,6 +2,8 @@ import type { Incident } from './types';
 
 /** Error SLO: 99.9% of requests succeed, so the error budget is 0.1%. */
 export const ERROR_BUDGET_PCT = 0.1;
+/** The budget is a 10 minute outage's worth: the incident clock burns it. */
+export const ERROR_BUDGET_SECONDS = 600;
 /** Latency SLO: p99 stays within 1.5x of the service's normal p99. */
 export const LATENCY_SLO_FACTOR = 1.5;
 

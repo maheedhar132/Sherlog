@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { newProfile, recordMatch, type Profile } from '../ai/adapter';
-import { createDaily, createFromSeed, createMatch, createTutorial, parseIncidentHash, shareText, type MatchResult, type MatchSetup } from '../game/session';
+import { createDaily, createFromSeed, createMatch, createShiftIncident, createTutorial, parseIncidentHash, shareText, type MatchResult, type MatchSetup } from '../game/session';
+import { isBetterShift, scoreShift, SHIFT_LENGTH, toEntry, type ShiftEntry } from '../game/shift';
 import { recordDaily } from '../game/streak';
 import { exportProfile, importProfile, loadProfile, saveProfile } from '../lib/storage';
 import type { Mode } from '../sim/types';
@@ -8,10 +9,12 @@ import { FieldGuide } from './FieldGuide';
 import { Home } from './Home';
 import { Match } from './Match';
 import { Postmortem } from './Postmortem';
+import { ShiftSummary } from './ShiftSummary';
 
 type Screen =
   | { name: 'home' }
   | { name: 'match'; setup: MatchSetup }
+  | { name: 'shift'; mode: Mode; entries: ShiftEntry[]; best: boolean }
   | { name: 'post'; setup: MatchSetup; result: MatchResult; before: number; after: number };
 
 export function App() {
@@ -21,6 +24,7 @@ export function App() {
     return link ? { name: 'match', setup: createFromSeed(link.seed, link.mode, loadProfile(), link.fault) } : { name: 'home' };
   });
   const [guide, setGuide] = useState(false);
+  const [shiftRun, setShiftRun] = useState<{ mode: Mode; entries: ShiftEntry[] } | null>(null);
 
   useEffect(() => {
     saveProfile(profile);
@@ -40,7 +44,28 @@ export function App() {
 
   const play = (mode: Mode) => setScreen({ name: 'match', setup: createMatch(profile, mode) });
 
+  const startShift = (mode: Mode) => {
+    setShiftRun({ mode, entries: [] });
+    setScreen({ name: 'match', setup: createShiftIncident(profile, mode, 1, SHIFT_LENGTH) });
+  };
+
+  // After a shift incident: the next one, or the summary (which also records your best shift).
+  const advance = (setup: MatchSetup) => {
+    const shift = setup.shift;
+    if (!shift || !shiftRun) return play(setup.mode);
+    if (shift.n < shift.of) return setScreen({ name: 'match', setup: createShiftIncident(profile, setup.mode, shift.n + 1, shift.of) });
+    const score = scoreShift(shiftRun.entries);
+    const best = isBetterShift(score, profile.bestShift);
+    setProfile({
+      ...profile,
+      shifts: (profile.shifts ?? 0) + 1,
+      ...(best ? { bestShift: { solved: score.solved, total: score.total, date: new Date().toISOString().slice(0, 10) } } : {}),
+    });
+    setScreen({ name: 'shift', mode: shiftRun.mode, entries: shiftRun.entries, best });
+  };
+
   const finish = (setup: MatchSetup, result: MatchResult) => {
+    if (setup.shift) setShiftRun((r) => (r ? { ...r, entries: [...r.entries, toEntry(result)] } : r));
     if (setup.tutorial) {
       // Training is unranked: it leaves the AI calibration and the record alone.
       setProfile({ ...profile, tutorialDone: true });
@@ -91,6 +116,7 @@ export function App() {
           onPlay={play}
           onTutorial={() => setScreen({ name: 'match', setup: createTutorial() })}
           onDaily={() => setScreen({ name: 'match', setup: createDaily() })}
+          onShift={startShift}
           onOpenGuide={() => setGuide(true)}
           onExport={() => {
             const blob = new Blob([exportProfile(profile)], { type: 'application/json' });
@@ -126,9 +152,12 @@ export function App() {
           profile={profile}
           strengthBefore={screen.before}
           strengthAfter={screen.after}
-          onNext={() => play(screen.setup.mode)}
+          onNext={() => advance(screen.setup)}
           onHome={() => setScreen({ name: 'home' })}
         />
+      )}
+      {screen.name === 'shift' && (
+        <ShiftSummary entries={screen.entries} mode={screen.mode} best={screen.best} profile={profile} onAgain={() => startShift(screen.mode)} onHome={() => setScreen({ name: 'home' })} />
       )}
       {guide && <FieldGuide onClose={() => setGuide(false)} />}
     </div>

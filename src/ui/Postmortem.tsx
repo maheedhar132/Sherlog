@@ -230,7 +230,7 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
             <button onClick={copy}>{copied ? 'Copied ✓' : '📋 Copy result'}</button>
             {!setup.daily && (
               <button className="primary" onClick={onNext}>
-                {setup.tutorial ? 'Play a real incident →' : 'Next incident →'}
+                {setup.tutorial ? 'Play a real incident →' : setup.shift ? (setup.shift.n < setup.shift.of ? `Next in your shift (${setup.shift.n + 1}/${setup.shift.of}) →` : 'See your shift →') : 'Next incident →'}
               </button>
             )}
             <button onClick={onHome}>Home</button>

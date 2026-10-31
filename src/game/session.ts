@@ -15,6 +15,8 @@ export interface MatchSetup {
   tutorial?: boolean;
   /** Set when the scenario picker forced the fault, which a shared link must repeat to rebuild the same incident. */
   forced?: FaultId;
+  /** Position in an on-call shift, a run of back-to-back incidents scored together. */
+  shift?: { n: number; of: number };
 }
 
 export interface PlayerAction {
@@ -113,4 +115,9 @@ export function shareText(setup: MatchSetup, result: MatchResult, url: string, s
   // A shared result links to the exact incident, so a friend can try to beat it.
   const link = setup.daily || setup.tutorial ? url : `${url}#seed=${setup.incident.seed}&mode=${setup.mode}${setup.forced ? `&fault=${setup.forced}` : ''}`;
   return `${title}\nMTTR ${you} vs AI ${fmt(result.aiMttr)}: ${verdict}\n${trail || '⬛'}\n${link}`;
+}
+
+/** One incident of an on-call shift: the player's usual difficulty, with the AI at their level. */
+export function createShiftIncident(profile: Profile, mode: Mode, n: number, of: number): MatchSetup {
+  return { ...createMatch(profile, mode), shift: { n, of } };
 }

@@ -213,6 +213,9 @@ h3 {
 .mode-card.hard h2 {
   color: var(--bad);
 }
+.mode-card.shift h2 {
+  color: var(--accent);
+}
 .mode-card.daily h2 {
   color: var(--violet);
 }
