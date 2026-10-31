@@ -39,6 +39,8 @@ One `strength` dial drives temperature, confidence threshold, thinking speed and
 
 Simulation and inference share one source of truth (`src/sim/faults.ts`). The AI knows the textbook, and so can you: open the in-game **Field guide**.
 
+> **Is it really AI, or just hardcoded rules?** There isn't a single `if symptom then cause` rule in the AI code, and a test proves it diagnoses a fault type it was never written for. The full explanation, a real step-by-step investigation and the honest limits are in **[HOW-IT-WORKS.md](HOW-IT-WORKS.md)**.
+
 ## Modes
 
 | Mode | Red herrings | AI target | Starts at |
