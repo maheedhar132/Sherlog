@@ -2,7 +2,7 @@
 
 # 🔍 Sherlog
 
-**An on-call detective game. Production is on fire: race an AI to the root cause.**
+**An on-call detective game. Production is on fire: race an AI to the root cause, then fix it.**
 
 ### [▶ Play now at sherlog-five.vercel.app](https://sherlog-five.vercel.app/)
 
@@ -16,14 +16,18 @@ free · runs entirely in your browser · no account · no API keys · no LLM
 
 </div>
 
-You get paged: latency is burning the SLO. You and an AI investigator see **the same dashboards**: a service map, metrics, logs, traces and a deploy log. Every query costs time. The first to name the **root cause** (the service *and* the fault) wins. Then a postmortem replays your path next to the AI's reasoning.
+You get paged: latency is burning the SLO. You and an AI investigator see **the same dashboards**: a service map, metrics, logs, traces and a change log. Every query costs time. The first to name the **root cause** (the service *and* the fault) and **choose the fix** wins. Then a postmortem replays your path next to the AI's reasoning.
 
 | | | |
 |:---:|:---:|:---:|
-| ![Investigating a cache with metrics](docs/screens/match.png) | ![The expanded service map](docs/screens/expanded.png) | ![The postmortem with the AI's reasoning](docs/screens/postmortem.png) |
-| Investigate | Read the topology | Compare with the AI |
+| ![Investigating a slow third-party API](docs/screens/match.png) | ![Choosing the fix after the diagnosis](docs/screens/fix.png) | ![The postmortem with the AI's belief and reasoning](docs/screens/postmortem.png) |
+| Investigate | Choose the fix | Compare with the AI |
 
 Incidents are generated from a seed (random service graph, culprit, noise and red herrings), so there is always a new one, plus a **daily** that is the same for everyone.
+
+- **12 kinds of failure**, from memory leaks and retry storms to expired certificates, full disks and stuck queue consumers. Some page nobody at all.
+- **Diagnose, then fix.** Pick the mitigation that actually stops the bleeding; the postmortem explains why the tempting ones don't work.
+- **Built to be learned from.** A 2-minute guided training, an optional coach that explains what each signal usually means, and hints that cost time.
 
 ## Is the AI real?
 
@@ -39,12 +43,12 @@ It is also honest about its limits: it shares the simulator's symptom table (wri
 
 | Mode | Target | Notes |
 |---|---|---|
-| Easy | you win ~70% | 1 red herring |
-| Normal | you win ~50% | 2 red herrings, coincidental deploys |
-| Hard | you win ~30% | 3 red herrings |
+| Easy | you win ~70% | smaller system, 1 red herring, coach on |
+| Normal | you win ~50% | 2 red herrings, coincidental deploys and config changes |
+| Hard | you win ~30% | bigger system, 3 red herrings, one signal on the culprit goes missing |
 | Daily | fixed AI | same incident and AI for everyone, with a streak |
 
-Metrics cost 10 s, logs 15 s, traces 20 s, deploys 5 s. A wrong answer costs 20 s, then 40 s, then 60 s, so guessing does not pay. After each match the AI's strength moves toward your target win rate, and you see more of the incident types you are weakest at. The targets are tuned on simulated players so far, so real-player feedback is welcome.
+Metrics cost 10 s, logs 15 s, traces 20 s, the change log 5 s and a hint 15 s. A wrong answer or a wrong fix costs 20 s, then 40 s, then 60 s, so guessing does not pay. After each match the AI's strength moves toward your target win rate, and you see more of the incident types you are weakest at. The targets are tuned on simulated players so far, so real-player feedback is welcome.
 
 ## Your profile and daily streaks
 
@@ -69,12 +73,12 @@ npm run dev
 
 PRs are welcome: fork, branch, open a PR. `main` is protected, CI must pass and every PR is reviewed, with a Vercel preview so reviewers can play your change. Read **[CONTRIBUTING.md](CONTRIBUTING.md)** first.
 
-The best contribution is a **new fault type**: one entry in [`src/sim/faults.ts`](src/sim/faults.ts) (where it can happen, its symptoms, a postmortem story). Ideas: certificate expiry, disk full, clock skew, thread-pool exhaustion, a bad feature flag, Kafka consumer lag.
+The best contribution is a **new fault type**: an entry in [`src/sim/faults.ts`](src/sim/faults.ts) (where it can happen, its symptoms, a postmortem story) and one in [`src/sim/fixes.ts`](src/sim/fixes.ts) (the right mitigation and why the tempting ones fail). Ideas: clock skew, noisy neighbour, a partial availability-zone failure, autoscaling lag, a hot shard.
 
 ## Roadmap
 
 - [ ] Debugging-style insights: which dashboards you open first, and when you declare too early
-- [ ] More fault types and multi-fault incidents
+- [ ] Multi-fault incidents and more fault types
 - [ ] Installable PWA that works offline
 - [ ] An optional local-LLM coach for the postmortem (off by default; the game stays LLM-free)
 

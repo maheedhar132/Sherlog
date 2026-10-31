@@ -1006,7 +1006,8 @@ h3 {
 .map-strip .service-map {
   width: 100%;
   height: auto;
-  max-height: 236px;
+  /* Leave room for the dashboards on short windows. */
+  max-height: min(236px, 27vh);
 }
 .hint-inline {
   flex: 1;

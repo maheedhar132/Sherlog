@@ -4,6 +4,20 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Added
+
+- **Six new fault types** (12 in all): thread pool exhaustion, slow third-party API, certificate expiry, disk full, stuck queue consumer (a poison message) and a bad config or feature flag. They add disk and consumer-lag metrics, TLS, disk, config and poison-message log signals, and config flips in the change log. Some of them page nobody.
+- **A mitigation step.** After the diagnosis, choose the fix that stops the bleeding. A wrong fix costs time, the AI applies the fix too, and the postmortem explains the right one.
+- **Guided 2-minute training**, an optional **coach** that explains what each signal usually means (it reads only what you have opened), and **hints** that cost 15 s.
+- Pages now show SLO and error-budget numbers. Charts show values on hover with a shared crosshair and time axes, logs highlight the filter, and keyboard shortcuts switch dashboards.
+- The postmortem charts how sure the AI was of the right answer after each step.
+
+### Changed
+
+- The service map is a full-width strip, readable without expanding it.
+- Every system now has a queue and a worker. Easy systems are smaller, Hard systems are bigger and lose one signal on the culprit, so the three modes differ by more than AI speed.
+- The AI treats a deploy and a config change as different evidence and commits when no remaining dashboard is worth its time cost.
+
 ## [1.1.0] - 2026-10-31
 
 Daily streaks, fairer rules, a visible AI reasoning trace, and claims that match what the game does.
