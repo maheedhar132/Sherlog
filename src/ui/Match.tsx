@@ -1,27 +1,46 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { aiStateAt } from '../ai/investigator';
 import { fmt, type MatchResult, type MatchSetup, type PlayerAction } from '../game/session';
+import { loadCoachPref, saveCoachPref } from '../lib/storage';
 import { COST, WRONG_PENALTY, wrongPenalty } from '../sim/constants';
-import { detectAlerts, detectMetrics } from '../sim/detect';
+import { detectAlerts, observe } from '../sim/detect';
 import { FAULTS, FAULT_IDS, isCompatible } from '../sim/faults';
+import { FIXES, FIX_FOR, fixOptions, type FixId } from '../sim/fixes';
 import { queryCost, sameHypothesis } from '../sim/incident';
-import type { FaultId, QueryKey } from '../sim/types';
+import { pages } from '../sim/slo';
+import type { FaultId, QueryKey, ServiceKind } from '../sim/types';
 import { CHANNEL_ICON, KIND_LABEL, describeQuery } from './labels';
-import { DeploysPanel, LogsPanel, MetricsPanel, TracePanel } from './Panels';
 import { Modal } from './Modal';
+import { DeploysPanel, LogsPanel, MetricsPanel, TracePanel } from './Panels';
 import { ServiceMap } from './ServiceMap';
+import { FEATURE_TIPS } from './tips';
 
 type Tab = 'metrics' | 'logs' | 'traces' | 'deploys';
 
+const TAB_KEYS: Record<string, Tab> = { m: 'metrics', l: 'logs', t: 'traces', d: 'deploys' };
+const HINT_COST = 15;
+const KIND_WORD: Record<ServiceKind, string> = {
+  gateway: 'the gateway',
+  app: 'an application service',
+  db: 'a database',
+  cache: 'a cache',
+  queue: 'the queue',
+  worker: 'a background worker',
+  external: 'a third-party API',
+};
+
 interface Props {
   setup: MatchSetup;
+  /** Whether the coach starts on (new players and Easy), unless the player already chose. */
+  coachDefault: boolean;
   onFinish: (r: MatchResult) => void;
   onOpenGuide: () => void;
 }
 
-export function Match({ setup, onFinish, onOpenGuide }: Props) {
+export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   const { incident, ai } = setup;
   const t = incident.topology;
+  const truth = incident.truth;
   const startRef = useRef(performance.now());
   const [wall, setWall] = useState(0);
   const [extra, setExtra] = useState(0);
@@ -35,6 +54,10 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
   const [declFault, setDeclFault] = useState<FaultId>(FAULT_IDS[0]);
   const [toast, setToast] = useState<string | null>(null);
   const [mapExpanded, setMapExpanded] = useState(false);
+  const [mitigating, setMitigating] = useState(false);
+  const [badFixes, setBadFixes] = useState<FixId[]>([]);
+  const [hints, setHints] = useState(0);
+  const [coachOn, setCoachOn] = useState(() => !!setup.tutorial || (loadCoachPref() ?? coachDefault));
 
   useEffect(() => {
     const id = setInterval(() => setWall((performance.now() - startRef.current) / 1000), 200);
@@ -44,25 +67,19 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
   const clock = wall + extra;
   const misses = actions.filter((a) => a.kind === 'declare' && !a.correct).length;
   const nextPenalty = wrongPenalty(misses + 1);
+  const nextFixPenalty = wrongPenalty(badFixes.length + 1);
   const aiNow = aiStateAt(ai, wall);
   const alerts = useMemo(() => detectAlerts(incident), [incident]);
-  const pageSummary = useMemo(
-    () =>
-      [...alerts].map((id) => {
-        const m = detectMetrics(incident.data.metrics[id]);
-        const what = [m.has('lat_up') && 'latency', m.has('err_up') && 'errors', m.has('nodata') && 'no data'].filter(Boolean).join(' + ');
-        return `${id} (${what})`;
-      }),
-    [alerts, incident],
-  );
+  const pageLines = useMemo(() => pages(incident, alerts), [incident, alerts]);
+  const options = useMemo(() => fixOptions(incident.seed, truth.fault), [incident, truth.fault]);
 
   useEffect(() => {
-    if (phase === 'running' && aiNow.finished && clock > ai.mttr) setPhase('lost');
-  }, [phase, aiNow.finished, clock, ai.mttr]);
+    if (phase === 'running' && !mitigating && aiNow.finished && clock > ai.mttr) setPhase('lost');
+  }, [phase, mitigating, aiNow.finished, clock, ai.mttr]);
 
   useEffect(() => {
     if (!toast) return;
-    const id = setTimeout(() => setToast(null), 2200);
+    const id = setTimeout(() => setToast(null), 2400);
     return () => clearTimeout(id);
   }, [toast]);
 
@@ -93,26 +110,98 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
 
   const declare = () => {
     const hyp = { service: declService, fault: declFault };
-    const correct = sameHypothesis(hyp, incident.truth);
+    const correct = sameHypothesis(hyp, truth);
     const penalty = correct ? 0 : nextPenalty;
-    const action: PlayerAction = { kind: 'declare', hyp, correct, clock, cost: penalty };
-    const all = [...actions, action];
-    setActions(all);
+    setActions([...actions, { kind: 'declare', hyp, correct, clock, cost: penalty }]);
     if (!correct) {
       setExtra((e) => e + penalty);
       setToast(`✗ Not it: ${FAULTS[declFault].name} on ${declService}. +${penalty}s`);
       return;
     }
-    const won = phase === 'running' && clock < ai.mttr;
-    onFinish({ won, playerMttr: clock, aiMttr: ai.mttr, actions: all });
+    // Diagnosis is not the end of the incident: now stop the bleeding.
+    setMitigating(true);
+  };
+
+  const chooseFix = (fix: FixId) => {
+    const correct = fix === (FIX_FOR[truth.fault]?.fix ?? 'restart');
+    const penalty = correct ? 0 : nextFixPenalty;
+    const all = [...actions, { kind: 'fix' as const, fix, correct, clock, cost: penalty }];
+    setActions(all);
+    if (!correct) {
+      setBadFixes((b) => [...b, fix]);
+      setExtra((e) => e + penalty);
+      setToast(`✗ That does not stop it. +${penalty}s`);
+      return;
+    }
+    onFinish({ won: phase === 'running' && clock < ai.mttr, playerMttr: clock, aiMttr: ai.mttr, actions: all });
   };
 
   const giveUp = () => onFinish({ won: false, playerMttr: null, aiMttr: ai.mttr, actions });
+
+  const useHint = () => {
+    if (hints >= 3) return;
+    const cost = setup.tutorial ? 0 : HINT_COST;
+    setHints((h) => h + 1);
+    setExtra((e) => e + cost);
+    setActions((a) => [...a, { kind: 'hint', clock, cost }]);
+  };
+  const hintTexts = [
+    `The culprit is ${KIND_WORD[t.byId[truth.service].kind]}.`,
+    `Look at ${truth.service}.`,
+    `The fault is: ${FAULTS[truth.fault].name}.`,
+  ].slice(0, hints);
+
+  // Keyboard shortcuts, off while a dialog is open or a form field has focus.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || document.querySelector('[role="dialog"]')) return;
+      if ((e.target as HTMLElement).closest('input, select, textarea')) return;
+      const k = e.key.toLowerCase();
+      if (TAB_KEYS[k]) setTab(TAB_KEYS[k]);
+      else if (k === 'r') runQuery(currentKey);
+      else if (k === 'e') setMapExpanded(true);
+      else if (k === 'h') useHint();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  // The coach reads only what the player has already opened.
+  const services = new Set([...queried].map((k) => describeQuery(k).service).filter(Boolean));
+  const lastQuery = [...actions].reverse().find((a) => a.kind === 'query');
+  const tips = useMemo(() => {
+    if (!lastQuery?.key) return [];
+    const found = [...observe(incident, lastQuery.key)].map((f) => FEATURE_TIPS[f.split(':')[0] === 'dep' || f.split(':')[0] === 'cfg' ? f.split(':')[0] : f]);
+    return [...new Set(found.filter(Boolean))].slice(0, 3);
+  }, [lastQuery?.key, incident]);
+  const nudge =
+    queried.size === 0
+      ? 'Start with a paging service: click it on the map, then pull its metrics.'
+      : services.size < 2
+        ? 'That service may only be a victim. Click something it depends on and compare.'
+        : tips.length === 0
+          ? 'Nothing odd there: rule it out and look somewhere else.'
+          : 'Found a tell-tale sign? Confirm it in another dashboard, then declare.';
+
+  const steps: [string, boolean][] = [
+    ['Read the page: the red services are alerting.', true],
+    ['Pull a dashboard. Every one costs time.', queried.size > 0],
+    ['Compare a second service: click it on the map.', services.size >= 2],
+    ['Find the odd one out: whose own numbers look wrong, not just slow?', services.has(truth.service)],
+    ['Declare the service and the fault.', actions.some((a) => a.kind === 'declare' && a.correct)],
+    ['Choose the fix that stops the bleeding.', false],
+  ];
+  const nextStep = steps.findIndex(([, done]) => !done);
 
   const svc = t.byId[selected];
   const aiFeed = [...aiNow.visible].reverse();
   const aiConfidence = aiNow.visible.length ? aiNow.visible[aiNow.visible.length - 1].confidence : 0;
   const masked = (s: string) => '▒'.repeat(Math.min(12, s.length));
+  const toggleCoach = () =>
+    setCoachOn((on) => {
+      saveCoachPref(!on);
+      return !on;
+    });
 
   return (
     <div className="match">
@@ -124,9 +213,17 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
         </div>
         <div className="incident-title">
           <div className="inc-id">
-            {setup.daily ? `DAILY #${setup.daily.number}` : `INC-${String(incident.seed).slice(-5)}`} · {setup.mode.toUpperCase()}
+            {setup.tutorial ? 'TRAINING' : setup.daily ? `DAILY #${setup.daily.number}` : `INC-${String(incident.seed).slice(-5)}`} · {setup.mode.toUpperCase()}
           </div>
-          <div className="paging">🔔 Paging: {pageSummary.join(', ') || 'customer complaints, no alerts firing'}</div>
+          <div className="paging">
+            🔔 PAGED 14:02 · {pageLines.length ? `${pageLines.length} alerting` : 'customers report problems, no alert fired'}
+          </div>
+          <ul className="page-lines">
+            {pageLines.slice(0, 3).map((p) => (
+              <li key={p.service}>{p.text}</li>
+            ))}
+            {pageLines.length > 3 && <li>+{pageLines.length - 3} more</li>}
+          </ul>
         </div>
         <div className={`clock ai ${aiNow.finished ? 'done' : ''}`}>
           <span>AI</span>
@@ -135,18 +232,56 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
         </div>
       </header>
 
+      <section className="card map-strip">
+        <div className="card-head">
+          <h3>Service map</h3>
+          <span className="hint-inline">Red = paging · click a service to inspect it · letters show what you pulled (M L T)</span>
+          <button className="icon-btn" onClick={() => setMapExpanded(true)} aria-label="Expand service map" title="Expand service map (E)">
+            ⤢ Expand
+          </button>
+        </div>
+        <ServiceMap topology={t} alerts={alerts} selected={selected} queried={queried} onSelect={select} />
+      </section>
+
       <div className="match-grid">
         <aside className="col-left">
-          <section className="card">
-            <div className="card-head">
-              <h3>Service map</h3>
-              <button className="icon-btn" onClick={() => setMapExpanded(true)} aria-label="Expand service map" title="Expand service map">
-                ⤢ Expand
-              </button>
-            </div>
-            <ServiceMap topology={t} alerts={alerts} selected={selected} queried={queried} onSelect={select} />
-            <p className="hint">Red = paging. Click a service to investigate it. Letters show what you pulled (M/L/T).</p>
-          </section>
+          {setup.tutorial && (
+            <section className="card training">
+              <h3>Training: your first incident</h3>
+              <ol>
+                {steps.map(([text, done], i) => (
+                  <li key={text} className={done ? 'done' : i === nextStep ? 'now' : ''}>
+                    {done ? '✓' : i === nextStep ? '▶' : '○'} {text}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+          {coachOn && (
+            <section className="card coach">
+              <div className="card-head">
+                <h3>Coach</h3>
+                {!setup.tutorial && (
+                  <button className="icon-btn" onClick={toggleCoach}>
+                    Hide
+                  </button>
+                )}
+              </div>
+              <p className="nudge">{nudge}</p>
+              {tips.length > 0 && (
+                <ul className="tips">
+                  {tips.map((tip) => (
+                    <li key={tip}>{tip}</li>
+                  ))}
+                </ul>
+              )}
+              {hintTexts.map((h) => (
+                <p key={h} className="hint-text">
+                  💡 {h}
+                </p>
+              ))}
+            </section>
+          )}
           <section className="card declare">
             <h3>Declare root cause</h3>
             <label>
@@ -177,6 +312,14 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
               {misses === 0 ? `Wrong answer: +${WRONG_PENALTY}s, and each miss costs ${WRONG_PENALTY}s more.` : `Next wrong answer: +${nextPenalty}s.`} Name the cause,
               not the victim.
             </p>
+            <button onClick={useHint} disabled={hints >= 3} title="Hint (H)">
+              💡 {hints >= 3 ? 'No more hints' : `Hint (${setup.tutorial ? 'free' : `+${HINT_COST}s`})`}
+            </button>
+            {!coachOn && (
+              <button className="link-btn" onClick={toggleCoach}>
+                Show the coach
+              </button>
+            )}
           </section>
         </aside>
 
@@ -187,8 +330,13 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
             </h2>
             <nav className="tabs">
               {(['metrics', 'logs', 'traces', 'deploys'] as Tab[]).map((tb) => (
-                <button key={tb} className={`${tab === tb ? 'active' : ''} ${queried.has(keyFor(tb)) ? 'seen' : ''}`} onClick={() => setTab(tb)}>
-                  {CHANNEL_ICON[tb]} {tb}
+                <button
+                  key={tb}
+                  title={`${tb === 'deploys' ? 'changes' : tb} (${tb[0].toUpperCase()})`}
+                  className={`${tab === tb ? 'active' : ''} ${queried.has(keyFor(tb)) ? 'seen' : ''}`}
+                  onClick={() => setTab(tb)}
+                >
+                  {CHANNEL_ICON[tb]} {tb === 'deploys' ? 'changes' : tb}
                 </button>
               ))}
             </nav>
@@ -196,10 +344,8 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
           {!queried.has(currentKey) ? (
             <div className="query-cta">
               <p>
-                {tab === 'deploys'
-                  ? 'Pull the deploy history for every service.'
-                  : `Pull ${tab} for ${svc.id}.`}{' '}
-                Costs <b>{COST[tab]}s</b> of investigation time.
+                {tab === 'deploys' ? 'Pull the change history: deploys and config or flag changes.' : `Pull ${tab} for ${svc.id}.`} Costs{' '}
+                <b>{COST[tab]}s</b> of investigation time.
               </p>
               <button className="primary big" onClick={() => runQuery(currentKey)}>
                 {CHANNEL_ICON[tab]} Run query · +{COST[tab]}s
@@ -214,6 +360,7 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
           ) : (
             <DeploysPanel events={incident.data.deploys} />
           )}
+          <p className="hint shortcuts">Shortcuts: M L T D switch tabs · R run the query · E expand the map · H hint</p>
         </main>
 
         <aside className="col-right">
@@ -227,13 +374,19 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
                 if (a.kind === 'declare')
                   return (
                     <li key={i} className={a.correct ? 'good' : 'bad'}>
-                      {a.correct ? `✓ resolved · MTTR ${fmt(ai.mttr)}` : `✗ wrong guess (+${a.cost}s)`}
+                      {a.correct ? '✓ root cause found' : `✗ wrong guess (+${a.cost}s)`}
+                    </li>
+                  );
+                if (a.kind === 'fix')
+                  return (
+                    <li key={i} className="good">
+                      🔧 mitigated · MTTR {fmt(ai.mttr)}
                     </li>
                   );
                 const q = describeQuery(a.key);
                 return (
                   <li key={i}>
-                    {CHANNEL_ICON[q.channel]} pulled {q.channel}
+                    {CHANNEL_ICON[q.channel]} pulled {q.channel === 'deploys' ? 'changes' : q.channel}
                     {q.service && <span className="masked"> {masked(q.service)}</span>}
                   </li>
                 );
@@ -245,11 +398,15 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
             <h3>Your trail</h3>
             <ol>
               {[...actions].reverse().map((a, i) => (
-                <li key={i} className={a.kind === 'declare' ? (a.correct ? 'good' : 'bad') : ''}>
+                <li key={i} className={a.kind === 'declare' || a.kind === 'fix' ? (a.correct ? 'good' : 'bad') : ''}>
                   <time>{fmt(a.clock)}</time>{' '}
                   {a.kind === 'declare'
                     ? `${a.correct ? '✓' : '✗'} ${FAULTS[a.hyp!.fault].name} @ ${a.hyp!.service}`
-                    : `${CHANNEL_ICON[describeQuery(a.key!).channel]} ${a.key}`}
+                    : a.kind === 'fix'
+                      ? `${a.correct ? '🔧 fixed' : '✗ wrong fix'}: ${FIXES[a.fix!]}`
+                      : a.kind === 'hint'
+                        ? '💡 hint'
+                        : `${CHANNEL_ICON[describeQuery(a.key!).channel]} ${a.key}`}
                 </li>
               ))}
               {!actions.length && <li className="muted">nothing yet: start with the paging services</li>}
@@ -284,9 +441,26 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
             }}
           />
           <p className="hint">
-            Red = paging. Arrows point from caller to dependency. Click a service to inspect it. Letters show what you pulled (M =
-            metrics, L = logs, T = traces). Esc to close.
+            Red = paging. Arrows point from caller to dependency. Click a service to inspect it. Letters show what you pulled (M = metrics, L =
+            logs, T = traces). Esc to close.
           </p>
+        </Modal>
+      )}
+
+      {mitigating && (
+        <Modal label="Choose the fix" onClose={() => undefined}>
+          <h2>🔧 Root cause confirmed</h2>
+          <p>
+            <b>{FAULTS[truth.fault].name}</b> on <code>{truth.service}</code>. The clock is still running: stop the bleeding.
+          </p>
+          <div className="fix-options">
+            {options.map((f) => (
+              <button key={f} className="fix" onClick={() => chooseFix(f)} disabled={badFixes.includes(f)}>
+                {FIXES[f]}
+              </button>
+            ))}
+          </div>
+          <p className="hint">A wrong fix costs +{nextFixPenalty}s, and the next one more.</p>
         </Modal>
       )}
 
@@ -294,8 +468,8 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
         <Modal label="The AI resolved it first" onClose={() => setPhase('practice')}>
           <h2>🤖 The AI resolved it first</h2>
           <p>
-            AI MTTR <b>{fmt(ai.mttr)}</b>, and your clock is already past that. You can keep investigating unranked, or go straight to
-            the postmortem.
+            AI MTTR <b>{fmt(ai.mttr)}</b>, and your clock is already past that. You can keep investigating unranked, or go straight to the
+            postmortem.
           </p>
           <div className="row-buttons">
             <button className="primary" onClick={() => setPhase('practice')}>

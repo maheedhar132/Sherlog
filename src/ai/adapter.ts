@@ -57,6 +57,8 @@ export interface Profile {
   daily?: { date: string; won: boolean; playerMttr: number | null; aiMttr: number; share: string };
   streak: Streak;
   dailyStats: DailyStats;
+  /** Set once the guided first incident has been finished. */
+  tutorialDone?: boolean;
 }
 
 export function newProfile(): Profile {

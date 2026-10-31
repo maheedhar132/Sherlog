@@ -951,3 +951,192 @@ h3 {
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------------- dashboards */
+
+.metric .plot {
+  position: relative;
+}
+.metric .crosshair {
+  stroke: var(--muted);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.metric .point {
+  fill: var(--accent);
+  stroke: var(--bg);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.metric .ymax {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  font: 10px var(--mono);
+  color: var(--muted);
+  pointer-events: none;
+}
+.metric .xticks {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 2px 3px;
+  font: 10px var(--mono);
+  color: var(--muted);
+}
+.metric svg {
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+.logs-bar .count {
+  font: 11px var(--mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.log-lines mark {
+  background: rgba(255, 184, 77, 0.28);
+  color: inherit;
+  border-radius: 2px;
+}
+
+/* ---------------------------------------------------------------- match layout */
+
+.map-strip {
+  margin-bottom: 12px;
+}
+.map-strip .service-map {
+  width: 100%;
+  height: auto;
+  max-height: 236px;
+}
+.hint-inline {
+  flex: 1;
+  margin: 0 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.page-lines {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  font: 11.5px/1.45 var(--mono);
+  color: #ff9aa4;
+}
+.paging {
+  font-size: 13px;
+}
+.coach .nudge {
+  margin: 0 0 8px;
+  color: var(--text);
+}
+.coach .tips {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.coach .tips li {
+  margin-bottom: 4px;
+}
+.coach .hint-text {
+  margin: 6px 0 0;
+  color: var(--warn);
+  font-size: 13px;
+}
+.training ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+}
+.training li {
+  padding: 4px 0;
+  color: var(--muted);
+}
+.training li.done {
+  color: var(--good);
+}
+.training li.now {
+  color: var(--text);
+  font-weight: 600;
+}
+.link-btn {
+  background: none;
+  border-color: transparent;
+  color: var(--muted);
+  text-decoration: underline;
+  padding: 6px 0 0;
+}
+.declare > button + button {
+  margin-top: 8px;
+  width: 100%;
+}
+.shortcuts {
+  margin-top: 10px;
+}
+.fix-options {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+.fix-options .fix {
+  text-align: left;
+  padding: 10px 12px;
+}
+.fix-options .fix:disabled {
+  text-decoration: line-through;
+}
+
+/* ---------------------------------------------------------------- home + postmortem */
+
+.hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 10px;
+}
+.fix-card .fix-name {
+  font-weight: 650;
+  margin: 0 0 6px;
+}
+.belief {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.belief .grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.belief .axis {
+  fill: var(--muted);
+  font: 11px var(--mono);
+}
+.belief .belief-line {
+  fill: none;
+  stroke: var(--violet);
+  stroke-width: 2.5;
+}
+.belief .dot {
+  fill: var(--violet);
+  stroke: var(--panel);
+  stroke-width: 2;
+}
+.belief .dot.dip {
+  fill: var(--bad);
+}
+.belief .step {
+  font-size: 13px;
+  fill: var(--text);
+}
+
+@media (max-width: 560px) {
+  .race-bar {
+    position: static;
+  }
+  .hint-inline {
+    display: none;
+  }
+  .map-strip .service-map {
+    max-height: 200px;
+  }
+}

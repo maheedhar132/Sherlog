@@ -7,7 +7,7 @@ const PAD = 10;
 
 /** Compact fits the sidebar; expanded has room for full names and larger text. */
 const SIZES = {
-  compact: { w: 132, h: 40, gapX: 44, gapY: 14, maxChars: 17 },
+  compact: { w: 150, h: 46, gapX: 56, gapY: 16, maxChars: 19 },
   expanded: { w: 190, h: 52, gapX: 70, gapY: 22, maxChars: 40 },
 };
 
@@ -105,10 +105,10 @@ export function ServiceMap({ topology, alerts, selected, queried, onSelect, expa
           >
             <title>{`${s.id} (${KIND_LONG[s.kind]})${alerting ? ': PAGING' : ''}`}</title>
             <rect width={W} height={H} rx={7} />
-            <text x={10} y={expanded ? 22 : 17} className="node-name">
+            <text x={10} y={expanded ? 22 : 20} className="node-name">
               {name}
             </text>
-            <text x={10} y={expanded ? 40 : 31} className="node-kind">
+            <text x={10} y={expanded ? 40 : 37} className="node-kind">
               {expanded ? KIND_LONG[s.kind] : KIND_LABEL[s.kind]}
               {seen.length ? `  · ${seen.map((c) => c[0].toUpperCase()).join('')}` : ''}
             </text>

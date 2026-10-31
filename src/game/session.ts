@@ -2,6 +2,7 @@ import { DAILY_STRENGTH, pickFault, type Profile } from '../ai/adapter';
 import { simulateAi, type AiRun } from '../ai/investigator';
 import { hashString } from '../lib/rng';
 import { generateIncident } from '../sim/incident';
+import type { FixId } from '../sim/fixes';
 import type { Hypothesis, Incident, Mode, QueryKey } from '../sim/types';
 
 export interface MatchSetup {
@@ -9,12 +10,15 @@ export interface MatchSetup {
   ai: AiRun;
   mode: Mode;
   daily: { date: string; number: number } | null;
+  /** The guided first incident: unranked, with the coach on. */
+  tutorial?: boolean;
 }
 
 export interface PlayerAction {
-  kind: 'query' | 'declare';
+  kind: 'query' | 'declare' | 'fix' | 'hint';
   key?: QueryKey;
   hyp?: Hypothesis;
+  fix?: FixId;
   correct?: boolean;
   /** Your incident clock when you took the action. */
   clock: number;
@@ -53,6 +57,13 @@ export function createDaily(date = todayKey()): MatchSetup {
   return { incident, ai: simulateAi(incident, DAILY_STRENGTH), mode: 'normal', daily: { date, number: dailyNumber(date) } };
 }
 
+/** The guided first incident: a database saturation where only its callers page. */
+export const TUTORIAL_SEED = 32;
+export function createTutorial(): MatchSetup {
+  const incident = generateIncident({ seed: TUTORIAL_SEED, mode: 'easy' });
+  return { incident, ai: simulateAi(incident, 0.1), mode: 'easy', daily: null, tutorial: true };
+}
+
 export function fmt(seconds: number): string {
   const s = Math.max(0, Math.round(seconds));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -62,7 +73,12 @@ const EMOJI: Record<string, string> = { metrics: '🟦', logs: '🟨', traces: '
 
 export function shareText(setup: MatchSetup, result: MatchResult, url: string, streak = 0): string {
   const trail = result.actions
-    .map((a) => (a.kind === 'declare' ? (a.correct ? '🟩' : '🟥') : EMOJI[a.key === 'deploys' ? 'deploys' : a.key!.split(':')[0]]))
+    .map((a) => {
+      if (a.kind === 'declare') return a.correct ? '🟩' : '🟥';
+      if (a.kind === 'fix') return a.correct ? '🔧' : '🟥';
+      if (a.kind === 'hint') return '💡';
+      return EMOJI[a.key === 'deploys' ? 'deploys' : a.key!.split(':')[0]];
+    })
     .join('');
   const fire = setup.daily && streak >= 2 ? ` · 🔥 ${streak}` : '';
   const title = setup.daily ? `Sherlog · Daily #${setup.daily.number}${fire}` : `Sherlog · ${setup.mode}`;

@@ -30,6 +30,24 @@ export function loadProfile(): Profile {
   }
 }
 
+/** Whether the in-match coach is on: null until the player chooses. */
+export function loadCoachPref(): boolean | null {
+  try {
+    const v = localStorage.getItem('sherlog.coach');
+    return v === null ? null : v === 'on';
+  } catch {
+    return null;
+  }
+}
+
+export function saveCoachPref(on: boolean): void {
+  try {
+    localStorage.setItem('sherlog.coach', on ? 'on' : 'off');
+  } catch {
+    // Storage unavailable: the choice just won't persist.
+  }
+}
+
 export function saveProfile(p: Profile): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(p));

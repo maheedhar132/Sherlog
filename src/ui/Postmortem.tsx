@@ -3,8 +3,10 @@ import { weakestFault, type Profile } from '../ai/adapter';
 import { fmt, shareText, type MatchResult, type MatchSetup } from '../game/session';
 import { detectLogs, observe } from '../sim/detect';
 import { FAULTS } from '../sim/faults';
+import { FIXES, FIX_FOR } from '../sim/fixes';
 import type { Channel, QueryKey } from '../sim/types';
 import type { Suspect } from '../ai/investigator';
+import { BeliefChart } from './BeliefChart';
 import { CHANNEL_ICON, FEATURE_LABEL, describeQuery } from './labels';
 
 /** The AI's leading hypotheses and its belief in each. */
@@ -37,7 +39,9 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
   const fault = FAULTS[truth.fault];
   const [copied, setCopied] = useState(false);
 
-  const isKey = (key: QueryKey) => (key === 'deploys' ? truth.fault === 'bad_deploy' : key.endsWith(`:${truth.service}`));
+  const isKey = (key: QueryKey) => (key === 'deploys' ? ['bad_deploy', 'config_flag'].includes(truth.fault) : key.endsWith(`:${truth.service}`));
+  const rightFix = FIX_FOR[truth.fault];
+  const wrongFixes = result.actions.filter((a) => a.kind === 'fix' && !a.correct);
   const playerKeys = new Set(result.actions.filter((a) => a.kind === 'query').map((a) => a.key!));
   const missed = (['metrics', 'logs', 'traces'] as Channel[]).filter((c) => !playerKeys.has(`${c}:${truth.service}`));
   const evidence = (c: Channel): string => {
@@ -94,15 +98,42 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
       </section>
 
       <div className="pm-grid">
+        <section className="card fix-card">
+          <h3>The fix</h3>
+          <p className="fix-name">🔧 {rightFix ? FIXES[rightFix.fix] : 'Restart the service'}</p>
+          {rightFix && <p>{rightFix.why}</p>}
+          <p className="muted">
+            {result.playerMttr === null
+              ? 'You never got as far as the fix.'
+              : wrongFixes.length === 0
+                ? '✓ You picked it first time.'
+                : `You needed ${wrongFixes.length + 1} tries (+${wrongFixes.reduce((n, a) => n + a.cost, 0)} s).`}
+          </p>
+        </section>
+        <section className="card">
+          <h3>How sure the AI was of the right answer</h3>
+          <BeliefChart prior={ai.priorTruth} actions={ai.actions} />
+          <p className="hint">Each dot is a step. Dips are where evidence pointed the wrong way, such as a red herring.</p>
+        </section>
+      </div>
+
+      <div className="pm-grid">
         <section className="card">
           <h3>Your investigation</h3>
           <ol className="timeline">
             {result.actions.map((a, i) => (
-              <li key={i} className={a.kind === 'declare' ? (a.correct ? 'good' : 'bad') : isKey(a.key!) ? 'key' : ''}>
+              <li
+                key={i}
+                className={a.kind === 'declare' || a.kind === 'fix' ? (a.correct ? 'good' : 'bad') : a.kind === 'query' && isKey(a.key!) ? 'key' : ''}
+              >
                 <time>{fmt(a.clock)}</time>
                 {a.kind === 'declare'
                   ? `${a.correct ? '✓' : '✗'} declared ${FAULTS[a.hyp!.fault].name} @ ${a.hyp!.service}${a.correct ? '' : ` (+${a.cost}s)`}`
-                  : `${CHANNEL_ICON[describeQuery(a.key!).channel]} ${a.key}${isKey(a.key!) ? ' ⭐' : ''}`}
+                  : a.kind === 'fix'
+                    ? `${a.correct ? '🔧 fixed' : '✗ wrong fix'}: ${FIXES[a.fix!]}${a.correct ? '' : ` (+${a.cost}s)`}`
+                    : a.kind === 'hint'
+                      ? `💡 hint${a.cost ? ` (+${a.cost}s)` : ''}`
+                      : `${CHANNEL_ICON[describeQuery(a.key!).channel]} ${a.key}${isKey(a.key!) ? ' ⭐' : ''}`}
               </li>
             ))}
             {!result.actions.length && <li className="muted">no actions</li>}
@@ -116,12 +147,14 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
               <Suspects list={ai.prior} />
             </li>
             {ai.actions.map((a, i) => (
-              <li key={i} className={a.kind === 'declare' ? (a.correct ? 'good' : 'bad') : isKey(a.key) ? 'key' : ''}>
+              <li key={i} className={a.kind === 'fix' ? 'good' : a.kind === 'declare' ? (a.correct ? 'good' : 'bad') : isKey(a.key) ? 'key' : ''}>
                 <time>{fmt(a.wall + ai.actions.slice(0, i).reduce((sum, x) => sum + x.cost, 0))}</time>
                 {a.kind === 'declare'
                   ? `${a.correct ? '✓' : '✗'} declared ${FAULTS[a.hyp.fault].name} @ ${a.hyp.service} (${Math.round(a.confidence * 100)}% sure)`
-                  : `${CHANNEL_ICON[describeQuery(a.key).channel]} ${a.key}${isKey(a.key) ? ' ⭐' : ''}`}
-                <Suspects list={a.suspects} />
+                  : a.kind === 'fix'
+                    ? `🔧 applied: ${FIXES[a.fix]}`
+                    : `${CHANNEL_ICON[describeQuery(a.key).channel]} ${a.key}${isKey(a.key) ? ' ⭐' : ''}`}
+                {a.kind !== 'fix' && <Suspects list={a.suspects} />}
               </li>
             ))}
           </ol>
@@ -160,7 +193,9 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
         </section>
         <section className="card">
           <h3>How the AI adapted</h3>
-          {setup.daily ? (
+          {setup.tutorial ? (
+            <p>Training incidents are unranked: they don't change your AI calibration or your record. Ready for a real one?</p>
+          ) : setup.daily ? (
             <>
               <p>Daily incidents use a fixed AI so everyone races the same opponent. Your skill profile still updated.</p>
               <p>
@@ -192,7 +227,7 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
             <button onClick={copy}>{copied ? 'Copied ✓' : '📋 Copy result'}</button>
             {!setup.daily && (
               <button className="primary" onClick={onNext}>
-                Next incident →
+                {setup.tutorial ? 'Play a real incident →' : 'Next incident →'}
               </button>
             )}
             <button onClick={onHome}>Home</button>

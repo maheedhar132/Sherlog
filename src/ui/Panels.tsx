@@ -1,10 +1,20 @@
-import { useState } from 'react';
+import { useState, type PointerEvent } from 'react';
 import { ONSET, clockLabel } from '../sim/constants';
 import type { DeployEvent, LogLine, MetricSeries, Span } from '../sim/types';
 
 // ---------------------------------------------------------------- metrics
 
-function MetricChart({ series }: { series: MetricSeries }) {
+const clock = (i: number) => clockLabel(i).slice(0, 5);
+const fmtV = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v >= 100 ? Math.round(v).toString() : v.toFixed(v >= 10 ? 1 : 2));
+
+interface ChartProps {
+  series: MetricSeries;
+  /** Minute under the pointer, shared by every chart in the panel. */
+  hover: number | null;
+  onHover: (i: number | null) => void;
+}
+
+function MetricChart({ series, hover, onHover }: ChartProps) {
   const w = 300;
   const h = 92;
   const padL = 4;
@@ -24,39 +34,68 @@ function MetricChart({ series }: { series: MetricSeries }) {
   if (cur) segments.push(cur);
   const last = [...vals].reverse().find((v) => v !== null);
   const firstNull = vals.findIndex((v) => v === null);
-  const fmtV = (v: number) => (v >= 100 ? Math.round(v).toString() : v.toFixed(v >= 10 ? 1 : 2));
+  const at = hover !== null ? vals[hover] : undefined;
+  const move = (e: PointerEvent<SVGSVGElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    onHover(Math.max(0, Math.min(vals.length - 1, Math.round(((e.clientX - r.left) / r.width) * (vals.length - 1)))));
+  };
   return (
     <figure className="metric">
       <figcaption>
         <span>{series.name}</span>
-        <b>{firstNull >= 0 ? 'no data' : `${fmtV(last ?? 0)} ${series.unit}`}</b>
+        <b>
+          {hover !== null
+            ? at === null || at === undefined
+              ? `${clock(hover)} · no data`
+              : `${clock(hover)} · ${fmtV(at)} ${series.unit}`
+            : firstNull >= 0
+              ? 'no data'
+              : `${fmtV(last ?? 0)} ${series.unit}`}
+        </b>
       </figcaption>
-      <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-        {firstNull >= 0 && <rect className="nodata" x={x(firstNull)} y={0} width={w - x(firstNull)} height={h} />}
-        <line className="onset" x1={x(ONSET)} x2={x(ONSET)} y1={0} y2={h} />
-        {segments.map((d, i) => (
-          <path key={i} d={d} className="line" />
+      <div className="plot">
+        <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" onPointerMove={move} onPointerLeave={() => onHover(null)}>
+          {firstNull >= 0 && <rect className="nodata" x={x(firstNull)} y={0} width={w - x(firstNull)} height={h} />}
+          <line className="onset" x1={x(ONSET)} x2={x(ONSET)} y1={0} y2={h} />
+          {segments.map((d, i) => (
+            <path key={i} d={d} className="line" />
+          ))}
+          {hover !== null && <line className="crosshair" x1={x(hover)} x2={x(hover)} y1={0} y2={h} />}
+          {hover !== null && at !== null && at !== undefined && <circle className="point" cx={x(hover)} cy={y(at)} r={3} />}
+        </svg>
+        <span className="ymax">{fmtV(max / 1.15)}</span>
+      </div>
+      <div className="xticks" aria-hidden="true">
+        {[0, 15, 30, 45, 59].map((m) => (
+          <span key={m}>{clock(m)}</span>
         ))}
-        <text className="axis" x={w - 4} y={10} textAnchor="end">
-          {fmtV(max / 1.15)}
-        </text>
-      </svg>
+      </div>
     </figure>
   );
 }
 
 export function MetricsPanel({ series }: { series: MetricSeries[] }) {
+  const [hover, setHover] = useState<number | null>(null);
   return (
     <div className="metrics-grid">
       {series.map((s) => (
-        <MetricChart key={s.name} series={s} />
+        <MetricChart key={s.name} series={s} hover={hover} onHover={setHover} />
       ))}
-      <p className="hint">Last 60 minutes · dashed line = alert fired at {clockLabel(ONSET)}</p>
+      <p className="hint">
+        Last 60 minutes · hover a chart to read every metric at that minute · dashed line = alert fired at {clockLabel(ONSET)}
+      </p>
     </div>
   );
 }
 
 // ---------------------------------------------------------------- logs
+
+/** Wrap each match of the filter text in a highlight. */
+function highlight(msg: string, q: string) {
+  if (!q) return msg;
+  const parts = msg.split(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'i'));
+  return parts.map((p, i) => (p.toLowerCase() === q.toLowerCase() ? <mark key={i}>{p}</mark> : p));
+}
 
 export function LogsPanel({ lines }: { lines: LogLine[] }) {
   const [q, setQ] = useState('');
@@ -66,6 +105,9 @@ export function LogsPanel({ lines }: { lines: LogLine[] }) {
     <div className="logs">
       <div className="logs-bar">
         <input placeholder="filter logs…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Filter logs" />
+        <span className="count">
+          {shown.length} of {lines.length}
+        </span>
         <label>
           <input type="checkbox" checked={problemsOnly} onChange={(e) => setProblemsOnly(e.target.checked)} /> WARN/ERROR only
         </label>
@@ -75,7 +117,7 @@ export function LogsPanel({ lines }: { lines: LogLine[] }) {
           <li key={i} className={`lvl-${l.level}`}>
             <time>{clockLabel(l.t)}</time>
             <span className="lvl">{l.level}</span>
-            <span className="msg">{l.msg}</span>
+            <span className="msg">{highlight(l.msg, q)}</span>
           </li>
         ))}
         {!shown.length && <li className="empty">no matching lines</li>}
@@ -132,8 +174,9 @@ export function DeploysPanel({ events }: { events: DeployEvent[] }) {
         <tr>
           <th>time</th>
           <th>vs alert</th>
+          <th>type</th>
           <th>service</th>
-          <th>version</th>
+          <th>change</th>
           <th>by</th>
         </tr>
       </thead>
@@ -143,6 +186,7 @@ export function DeploysPanel({ events }: { events: DeployEvent[] }) {
             <tr key={i}>
               <td>{clockLabel(t)}</td>
               <td>{`${t < ONSET ? '-' : '+'}${Math.abs(ONSET - t).toFixed(1)}m`}</td>
+              <td>{e.kind === 'config' ? 'config' : 'deploy'}</td>
               <td>{e.service}</td>
               <td>{e.version}</td>
               <td>{e.author}</td>
@@ -150,7 +194,7 @@ export function DeploysPanel({ events }: { events: DeployEvent[] }) {
           ) : (
             <tr key={i} className="alert-row">
               <td>{clockLabel(t)}</td>
-              <td colSpan={4}>🔔 alert fired</td>
+              <td colSpan={5}>🔔 alert fired</td>
             </tr>
           ),
         )}

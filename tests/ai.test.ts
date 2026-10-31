@@ -12,8 +12,10 @@ describe('AI investigator', () => {
     for (let seed = 0; seed < 120; seed++) {
       const inc = generateIncident({ seed, mode: 'hard', fault: FAULT_IDS[seed % FAULT_IDS.length] });
       const run = simulateAi(inc, seed % 2 ? 1 : 0);
-      const last = run.actions[run.actions.length - 1];
+      const declares = run.actions.filter((a) => a.kind === 'declare');
+      const last = declares[declares.length - 1];
       expect(last.kind === 'declare' && last.correct, `seed ${seed}`).toBe(true);
+      expect(run.actions[run.actions.length - 1].kind, `seed ${seed}`).toBe('fix');
     }
   });
 
@@ -85,6 +87,7 @@ describe('what the AI is allowed to know', () => {
   const trail = (r: AiRun) => {
     const out: string[] = [];
     for (const a of r.actions) {
+      if (a.kind === 'fix') break;
       out.push(a.kind === 'query' ? a.key : `${a.hyp.fault}@${a.hyp.service}`);
       if (a.kind === 'declare') break;
     }
@@ -110,7 +113,8 @@ describe('what the AI is allowed to know', () => {
         expect([...p].sort((x, y) => y - x)).toEqual(p);
         expect(p[0]).toBeLessThanOrEqual(1);
       }
-      const last = run.actions[run.actions.length - 1];
+      const declares = run.actions.filter((a) => a.kind === 'declare');
+      const last = declares[declares.length - 1];
       if (last.kind === 'declare' && last.correct) expect(last.suspects[0].hyp).toEqual(last.hyp);
     }
   });

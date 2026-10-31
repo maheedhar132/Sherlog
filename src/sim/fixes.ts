@@ -1,0 +1,61 @@
+import { mulberry32, shuffle } from '../lib/rng';
+import type { FaultId } from './types';
+
+export type FixId =
+  | 'restart'
+  | 'rollback'
+  | 'scale_out'
+  | 'raise_timeouts'
+  | 'failover'
+  | 'kill_query'
+  | 'warm_cache'
+  | 'backoff'
+  | 'restore_dns'
+  | 'shed_load'
+  | 'circuit_breaker'
+  | 'renew_cert'
+  | 'expand_disk'
+  | 'skip_message'
+  | 'revert_config';
+
+export const FIXES: Record<FixId, string> = {
+  restart: 'Restart the service',
+  rollback: 'Roll back the latest deploy',
+  scale_out: 'Scale out more replicas',
+  raise_timeouts: 'Raise the client timeouts',
+  failover: 'Fail over to a replica',
+  kill_query: 'Kill the slow query and add the missing index',
+  warm_cache: 'Pre-warm the cache and raise its memory limit',
+  backoff: 'Revert the retry change and add backoff with a circuit breaker',
+  restore_dns: 'Restore the missing DNS record',
+  shed_load: 'Shed load and unblock the blocking call',
+  circuit_breaker: 'Open a circuit breaker and serve a fallback',
+  renew_cert: 'Renew and deploy the TLS certificate',
+  expand_disk: 'Free space and expand the volume',
+  skip_message: 'Quarantine the poison message and restart the consumer',
+  revert_config: 'Revert the config change or switch the flag off',
+};
+
+/** The right mitigation for each fault, and why the tempting alternatives don't work. */
+export const FIX_FOR: Record<FaultId, { fix: FixId; why: string }> = {
+  memory_leak: { fix: 'restart', why: 'A restart frees the leaked memory and stops the OOM kills at once; the real fix is a code change afterwards. Scaling out only delays the crash, and there was no deploy to roll back.' },
+  db_pool: { fix: 'kill_query', why: 'The slow query is what pins the connections. Killing it and adding the index frees the pool. Scaling out the callers sends even more load at a database that is already saturated.' },
+  bad_deploy: { fix: 'rollback', why: 'The errors began with the release, so rolling it back is the fastest safe mitigation. A restart would just bring the same bad code back up.' },
+  cache_stampede: { fix: 'warm_cache', why: 'The cache lost its hot keys and the database is carrying the load. Warm the cache and give it room; restarting the database would make the stampede worse.' },
+  retry_storm: { fix: 'backoff', why: 'Retries are multiplying traffic. Reverting them and adding backoff with a circuit breaker stops the amplification. Scaling the victim only absorbs a bigger storm.' },
+  dns_failure: { fix: 'restore_dns', why: 'The name no longer resolves, so nothing can connect. Only restoring the record fixes it; restarts, scaling and timeouts cannot make a missing name resolve.' },
+  thread_pool: { fix: 'shed_load', why: 'Every thread is blocked on a slow call. Shed load to let the pool drain and fix the blocking call. Scaling out helps little when each replica jams the same way.' },
+  slow_third_party: { fix: 'circuit_breaker', why: 'The slowness is outside your boundary. Stop waiting on it: open a circuit breaker and serve a fallback. Restarting your own services changes nothing.' },
+  certificate_expiry: { fix: 'renew_cert', why: 'Handshakes fail because the certificate expired. Renew and deploy it. Rolling back or restarting cannot make an expired certificate valid.' },
+  disk_full: { fix: 'expand_disk', why: 'Writes fail because the volume is full. Free space and expand it. Restarting or scaling out will not create disk space.' },
+  poison_message: { fix: 'skip_message', why: 'The consumer is stuck on one bad message. Quarantine it and restart the consumer so the backlog can drain. Scaling consumers just crash-loops more of them.' },
+  config_flag: { fix: 'revert_config', why: 'The errors began when the flag flipped, with no deploy. Reverting the flag is the fastest fix. A rollback would change nothing because the code never changed.' },
+};
+
+/** Four options, one correct, in a stable order for a given incident. */
+export function fixOptions(seed: number, fault: FaultId): FixId[] {
+  const rng = mulberry32((seed ^ 0x51ed270b) >>> 0);
+  const correct = FIX_FOR[fault]?.fix ?? 'restart';
+  const others = (Object.keys(FIXES) as FixId[]).filter((f) => f !== correct);
+  return shuffle(rng, [correct, ...shuffle(rng, others).slice(0, 3)]);
+}

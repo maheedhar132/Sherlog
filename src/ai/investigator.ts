@@ -1,6 +1,7 @@
 import { mulberry32, type Rng } from '../lib/rng';
 import { wrongPenalty } from '../sim/constants';
 import { pagingServices, playerView, type PlayerView } from '../sim/detect';
+import { FIX_FOR, type FixId } from '../sim/fixes';
 import { faultEffects } from '../sim/effects';
 import { hypotheses, queryCost, queryKeys, sameHypothesis } from '../sim/incident';
 import type { Fx, Hypothesis, Incident, QueryKey } from '../sim/types';
@@ -112,6 +113,12 @@ export class Investigator {
     return { hyp: this.hyps[i], p: p[i] };
   }
 
+  /** How likely the AI currently thinks one hypothesis is. */
+  probOf(h: Hypothesis): number {
+    const i = this.hyps.findIndex((x) => sameHypothesis(x, h));
+    return i < 0 ? 0 : this.posterior()[i];
+  }
+
   /** The leading hypotheses and how likely the AI thinks each is right now. */
   suspects(n = 3): Suspect[] {
     const p = this.posterior();
@@ -181,14 +188,18 @@ export interface Suspect {
 }
 
 /** `suspects` is the AI's top three hypotheses right after the action, so the postmortem can show why it looked where it did. */
+/** `pTruth` is the AI's belief in the right answer after the action; it is only recorded for the postmortem chart. */
 export type AiAction =
-  | { kind: 'query'; key: QueryKey; wall: number; cost: number; confidence: number; suspects: Suspect[] }
-  | { kind: 'declare'; hyp: Hypothesis; correct: boolean; wall: number; cost: number; confidence: number; suspects: Suspect[] };
+  | { kind: 'query'; key: QueryKey; wall: number; cost: number; confidence: number; suspects: Suspect[]; pTruth: number }
+  | { kind: 'declare'; hyp: Hypothesis; correct: boolean; wall: number; cost: number; confidence: number; suspects: Suspect[]; pTruth: number }
+  | { kind: 'fix'; fix: FixId; wall: number; cost: number; confidence: number; suspects: Suspect[]; pTruth: number };
 
 export interface AiRun {
   strength: number;
   /** The AI's leading suspects after reading only the paging alerts, before it opens any dashboard. */
   prior: Suspect[];
+  /** The AI's belief in the right answer before it opens anything. */
+  priorTruth: number;
   actions: AiAction[];
   /** Real seconds after the start at which the AI solves it. */
   wallEnd: number;
@@ -206,6 +217,7 @@ export function simulateAi(inc: Incident, strength: number, seed = inc.seed): Ai
   const rng = mulberry32((seed ^ 0x9e3779b9) >>> 0);
   const ai = new Investigator(playerView(inc));
   const prior = ai.suspects();
+  const priorTruth = ai.probOf(inc.truth);
   const actions: AiAction[] = [];
   let wall = 0;
   let extra = 0;
@@ -222,17 +234,22 @@ export function simulateAi(inc: Incident, strength: number, seed = inc.seed): Ai
       const cost = correct ? 0 : wrongPenalty(++wrongs);
       extra += cost;
       if (!correct) ai.eliminate(hyp);
-      actions.push({ kind: 'declare', hyp, correct, wall, cost, confidence: p, suspects: ai.suspects() });
-      if (correct) break;
+      actions.push({ kind: 'declare', hyp, correct, wall, cost, confidence: p, suspects: ai.suspects(), pTruth: ai.probOf(inc.truth) });
+      if (correct) {
+        // Decide on the mitigation and apply it.
+        wall += think() * 0.6 + 6;
+        actions.push({ kind: 'fix', fix: FIX_FOR[inc.truth.fault]?.fix ?? 'restart', wall, cost: 0, confidence: p, suspects: ai.suspects(), pTruth: ai.probOf(inc.truth) });
+        break;
+      }
       continue;
     }
     wall += think();
     const cost = queryCost(key);
     extra += cost;
     ai.observe(key);
-    actions.push({ kind: 'query', key, wall, cost, confidence: ai.best().p, suspects: ai.suspects() });
+    actions.push({ kind: 'query', key, wall, cost, confidence: ai.best().p, suspects: ai.suspects(), pTruth: ai.probOf(inc.truth) });
   }
-  return { strength, prior, actions, wallEnd: wall, mttr: wall + extra };
+  return { strength, prior, priorTruth, actions, wallEnd: wall, mttr: wall + extra };
 }
 
 /** What the AI has done by `wall` seconds, and its clock at that moment. */

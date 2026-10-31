@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { newProfile, recordMatch, type Profile } from '../ai/adapter';
-import { createDaily, createMatch, shareText, type MatchResult, type MatchSetup } from '../game/session';
+import { createDaily, createMatch, createTutorial, shareText, type MatchResult, type MatchSetup } from '../game/session';
 import { recordDaily } from '../game/streak';
 import { exportProfile, importProfile, loadProfile, saveProfile } from '../lib/storage';
 import type { Mode } from '../sim/types';
@@ -29,6 +29,12 @@ export function App() {
   const play = (mode: Mode) => setScreen({ name: 'match', setup: createMatch(profile, mode) });
 
   const finish = (setup: MatchSetup, result: MatchResult) => {
+    if (setup.tutorial) {
+      // Training is unranked: it leaves the AI calibration and the record alone.
+      setProfile({ ...profile, tutorialDone: true });
+      setScreen({ name: 'post', setup, result, before: 0, after: 0 });
+      return;
+    }
     const recorded = recordMatch(profile, {
       at: new Date().toISOString(),
       mode: setup.mode,
@@ -66,6 +72,7 @@ export function App() {
         <Home
           profile={profile}
           onPlay={play}
+          onTutorial={() => setScreen({ name: 'match', setup: createTutorial() })}
           onDaily={() => setScreen({ name: 'match', setup: createDaily() })}
           onOpenGuide={() => setGuide(true)}
           onExport={() => {
@@ -87,7 +94,13 @@ export function App() {
         />
       )}
       {screen.name === 'match' && (
-        <Match key={screen.setup.incident.seed} setup={screen.setup} onFinish={(r) => finish(screen.setup, r)} onOpenGuide={() => setGuide(true)} />
+        <Match
+          key={screen.setup.incident.seed}
+          setup={screen.setup}
+          coachDefault={profile.played < 3 || screen.setup.mode === 'easy'}
+          onFinish={(r) => finish(screen.setup, r)}
+          onOpenGuide={() => setGuide(true)}
+        />
       )}
       {screen.name === 'post' && (
         <Postmortem
