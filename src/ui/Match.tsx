@@ -5,7 +5,7 @@ import { loadCoachPref, saveCoachPref } from '../lib/storage';
 import { COST, WRONG_PENALTY, wrongPenalty } from '../sim/constants';
 import { detectAlerts, observe } from '../sim/detect';
 import { FAULTS, FAULT_IDS, isCompatible } from '../sim/faults';
-import { FIXES, FIX_FOR, fixOptions, type FixId } from '../sim/fixes';
+import { FIXES, FIX_FOR, STOPGAP_FOR, fixOptions, type FixId } from '../sim/fixes';
 import { queryCost, sameHypothesis } from '../sim/incident';
 import { ERROR_BUDGET_SECONDS, pages } from '../sim/slo';
 import type { FaultId, QueryKey, ServiceKind } from '../sim/types';
@@ -19,6 +19,8 @@ type Tab = 'metrics' | 'logs' | 'traces' | 'deploys';
 
 const TAB_KEYS: Record<string, Tab> = { m: 'metrics', l: 'logs', t: 'traces', d: 'deploys' };
 const HINT_COST = 15;
+/** A stopgap fix buys time without curing the cause, so it costs less than a plain wrong fix. */
+const STOPGAP_PENALTY = 10;
 const KIND_WORD: Record<ServiceKind, string> = {
   gateway: 'the gateway',
   app: 'an application service',
@@ -136,13 +138,14 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
 
   const chooseFix = (fix: FixId) => {
     const correct = fix === (FIX_FOR[truth.fault]?.fix ?? 'restart');
-    const penalty = correct ? 0 : nextFixPenalty;
-    const all = [...actions, { kind: 'fix' as const, fix, correct, clock, cost: penalty }];
+    const partial = !correct && fix === STOPGAP_FOR[truth.fault]?.fix;
+    const penalty = correct ? 0 : partial ? STOPGAP_PENALTY : nextFixPenalty;
+    const all = [...actions, { kind: 'fix' as const, fix, correct, partial, clock, cost: penalty }];
     setActions(all);
     if (!correct) {
       setBadFixes((b) => [...b, fix]);
       setExtra((e) => e + penalty);
-      setToast(`✗ That does not stop it. +${penalty}s`);
+      setToast(partial ? `🩹 Errors dip, then climb back: that only treats the symptom. +${penalty}s` : `✗ That does not stop it. +${penalty}s`);
       return;
     }
     onFinish({ won: phase === 'running' && clock < ai.mttr, playerMttr: clock, aiMttr: ai.mttr, actions: all, breached: clock >= ERROR_BUDGET_SECONDS });
@@ -535,7 +538,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
               </button>
             ))}
           </div>
-          <p className="hint">A wrong fix costs +{nextFixPenalty}s, and the next one more.</p>
+          <p className="hint">A wrong fix costs +{nextFixPenalty}s, and the next one more. Some fixes only buy a minute: choose the one that removes the cause.</p>
         </Modal>
       )}
 

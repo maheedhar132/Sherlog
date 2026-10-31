@@ -63,10 +63,23 @@ export const FIX_FOR: Record<FaultId, { fix: FixId; why: string }> = {
   noisy_neighbour: { fix: 'move_node', why: 'CPU is saturated without extra traffic, so another workload on the node is taking it. Move to a different node. Scaling out onto the same node would not help.' },
 };
 
-/** Four options, one correct, in a stable order for a given incident. */
+/** A tempting fix that genuinely helps for a minute but leaves the cause in place. Not every fault has one. */
+export const STOPGAP_FOR: Partial<Record<FaultId, { fix: FixId; why: string }>> = {
+  memory_leak: { fix: 'scale_out', why: 'More replicas share the load, so the crashes spread out for a while, but every one of them leaks too.' },
+  db_pool: { fix: 'failover', why: 'The replica takes the load, but the same slow query soon pins its connections as well.' },
+  cache_stampede: { fix: 'scale_out', why: 'More database replicas absorb the stampede for a minute, but the cache is still cold and the cost climbs.' },
+  retry_storm: { fix: 'shed_load', why: 'Dropping requests eases the pile-up, but the retries keep multiplying whatever you let through.' },
+  thread_pool: { fix: 'scale_out', why: 'New replicas help until their threads block on the same slow call.' },
+  perf_regression: { fix: 'scale_out', why: 'More replicas hide the slowdown at a higher cost, and the regression is still there.' },
+  rate_limited: { fix: 'circuit_breaker', why: 'A breaker stops the 429s, but it also stops the calls the vendor would have allowed.' },
+  noisy_neighbour: { fix: 'scale_out', why: 'Some new replicas land on quiet nodes, but the noisy node keeps degrading the ones on it.' },
+};
+
+/** Four options, one correct (and a stopgap where the fault has one), in a stable order for a given incident. */
 export function fixOptions(seed: number, fault: FaultId): FixId[] {
   const rng = mulberry32((seed ^ 0x51ed270b) >>> 0);
   const correct = FIX_FOR[fault]?.fix ?? 'restart';
-  const others = (Object.keys(FIXES) as FixId[]).filter((f) => f !== correct);
-  return shuffle(rng, [correct, ...shuffle(rng, others).slice(0, 3)]);
+  const stopgap = STOPGAP_FOR[fault]?.fix;
+  const others = (Object.keys(FIXES) as FixId[]).filter((f) => f !== correct && f !== stopgap);
+  return shuffle(rng, [correct, ...(stopgap ? [stopgap] : []), ...shuffle(rng, others).slice(0, stopgap ? 2 : 3)]);
 }

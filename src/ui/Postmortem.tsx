@@ -3,7 +3,7 @@ import { weakestFault, type Profile } from '../ai/adapter';
 import { fmt, shareText, type MatchResult, type MatchSetup } from '../game/session';
 import { detectLogs, observe } from '../sim/detect';
 import { FAULTS } from '../sim/faults';
-import { FIXES, FIX_FOR } from '../sim/fixes';
+import { FIXES, FIX_FOR, STOPGAP_FOR } from '../sim/fixes';
 import type { Channel, QueryKey } from '../sim/types';
 import type { Suspect } from '../ai/investigator';
 import { BeliefChart } from './BeliefChart';
@@ -106,6 +106,9 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
           <h3>The fix</h3>
           <p className="fix-name">🔧 {rightFix ? FIXES[rightFix.fix] : 'Restart the service'}</p>
           {rightFix && <p>{rightFix.why}</p>}
+          {result.actions.some((a) => a.partial) && STOPGAP_FOR[truth.fault] && (
+            <p className="tip">🩹 The stopgap you tried: {STOPGAP_FOR[truth.fault]!.why}</p>
+          )}
           <p className="muted">
             {result.playerMttr === null
               ? 'You never got as far as the fix.'
@@ -134,7 +137,7 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
                 {a.kind === 'declare'
                   ? `${a.correct ? '✓' : '✗'} declared ${FAULTS[a.hyp!.fault].name} @ ${a.hyp!.service}${a.correct ? '' : ` (+${a.cost}s)`}`
                   : a.kind === 'fix'
-                    ? `${a.correct ? '🔧 fixed' : '✗ wrong fix'}: ${FIXES[a.fix!]}${a.correct ? '' : ` (+${a.cost}s)`}`
+                    ? `${a.correct ? '🔧 fixed' : a.partial ? '🩹 stopgap' : '✗ wrong fix'}: ${FIXES[a.fix!]}${a.correct ? '' : ` (+${a.cost}s)`}`
                     : a.kind === 'hint'
                       ? `💡 hint${a.cost ? ` (+${a.cost}s)` : ''}`
                       : `${CHANNEL_ICON[describeQuery(a.key!).channel]} ${a.key}${isKey(a.key!) ? ' ⭐' : ''}`}

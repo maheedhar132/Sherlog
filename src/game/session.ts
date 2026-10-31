@@ -29,6 +29,8 @@ export interface PlayerAction {
   hyp?: Hypothesis;
   fix?: FixId;
   correct?: boolean;
+  /** A fix that helps for a minute without removing the cause. */
+  partial?: boolean;
   /** Your incident clock when you took the action. */
   clock: number;
   cost: number;
@@ -107,7 +109,7 @@ export function shareText(setup: MatchSetup, result: MatchResult, url: string, s
   const trail = result.actions
     .map((a) => {
       if (a.kind === 'declare') return a.correct ? '🟩' : '🟥';
-      if (a.kind === 'fix') return a.correct ? '🔧' : '🟥';
+      if (a.kind === 'fix') return a.correct ? '🔧' : a.partial ? '🩹' : '🟥';
       if (a.kind === 'hint') return '💡';
       return EMOJI[a.key === 'deploys' ? 'deploys' : a.key!.split(':')[0]];
     })

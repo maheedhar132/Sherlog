@@ -4,7 +4,7 @@ import { TUTORIAL_SEED, createFromSeed, createMatch, createTutorial, parseIncide
 import { importProfile } from '../src/lib/storage';
 import { detectAlerts } from '../src/sim/detect';
 import { FAULT_IDS } from '../src/sim/faults';
-import { FIXES, FIX_FOR, fixOptions } from '../src/sim/fixes';
+import { FIXES, FIX_FOR, STOPGAP_FOR, fixOptions } from '../src/sim/fixes';
 import { generateIncident } from '../src/sim/incident';
 import { pages } from '../src/sim/slo';
 
@@ -119,6 +119,23 @@ describe('shared incident links', () => {
       const again = createFromSeed(parsed!.seed, parsed!.mode, profile, parsed!.fault);
       expect(again.incident.truth).toEqual(match.incident.truth);
       expect(again.incident.topology.services.map((x) => x.id)).toEqual(match.incident.topology.services.map((x) => x.id));
+    }
+  });
+});
+
+describe('stopgap fixes', () => {
+  it('offers four distinct options, including the stopgap, and never confuses it with the cure', () => {
+    for (const f of FAULT_IDS) {
+      for (let seed = 1; seed <= 20; seed++) {
+        const opts = fixOptions(seed, f);
+        expect(new Set(opts).size).toBe(4);
+        expect(opts).toContain(FIX_FOR[f].fix);
+        const stop = STOPGAP_FOR[f];
+        if (stop) {
+          expect(stop.fix).not.toBe(FIX_FOR[f].fix);
+          expect(opts).toContain(stop.fix);
+        }
+      }
     }
   });
 });
