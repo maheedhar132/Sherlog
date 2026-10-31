@@ -4,6 +4,7 @@ import { fmt, type MatchResult, type MatchSetup, type PlayerAction } from '../ga
 import { loadCoachPref, saveCoachPref } from '../lib/storage';
 import { COST, WRONG_PENALTY, wrongPenalty } from '../sim/constants';
 import { detectAlerts, observe } from '../sim/detect';
+import { shortlist } from '../game/shortlist';
 import { FAULTS, FAULT_IDS, isCompatible } from '../sim/faults';
 import { FIXES, FIX_FOR, STOPGAP_FOR, fixOptions, type FixId } from '../sim/fixes';
 import { queryCost, sameHypothesis } from '../sim/incident';
@@ -101,6 +102,8 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
 
   // Only offer faults that can physically happen on that kind of service (the AI's hypothesis space is the same).
   const validFaults = (id: string) => FAULT_IDS.filter((f) => isCompatible(t, id, f));
+  // A shortlist of faults that explain what you have opened on this service (no aids on Hard).
+  const likely = setup.mode === 'hard' && !setup.tutorial ? [] : shortlist(incident, declService, queried);
   const pickDeclService = (id: string) => setDeclService(id);
 
   const select = (id: string) => {
@@ -372,9 +375,18 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
               Fault
               <select value={declFault} onChange={(e) => setDeclFault(e.target.value as FaultId | '')}>
                 <option value="">Choose a fault…</option>
-                {validFaults(declService).length > 0 && (
+                {likely.length > 0 && (
+                  <optgroup label="Best match for what you've seen">
+                    {likely.map((f) => (
+                      <option key={f} value={f}>
+                        {FAULTS[f].name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {validFaults(declService).filter((f) => !likely.includes(f)).length > 0 && (
                   <optgroup label="Fits this kind of service">
-                    {validFaults(declService).map((f) => (
+                    {validFaults(declService).filter((f) => !likely.includes(f)).map((f) => (
                       <option key={f} value={f}>
                         {FAULTS[f].name}
                       </option>
