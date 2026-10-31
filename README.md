@@ -1,13 +1,13 @@
 <div align="center">
 
-# 🔥 Incident Race
+# 🔍 Sherlog
 
 **Production is on fire. Race an AI on-call engineer to the root cause. It learns how you debug.**
 
-[▶ Play in your browser](https://YOUR-USERNAME.github.io/incident-race/) · free · offline · no account · no API keys
+[▶ Play in your browser](https://maheedhar132.github.io/Sherlog/) · free · offline · no account · no API keys
 
 <!-- Record a 15s GIF of one match and drop it here: it's the single biggest driver of stars. -->
-<!-- ![Incident Race demo](docs/demo.gif) -->
+<!-- ![Sherlog demo](docs/demo.gif) -->
 
 </div>
 
@@ -55,8 +55,8 @@ Your first 3 incidents are **placement**: the AI adapts faster while it calibrat
 ## Run it locally
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/incident-race.git
-cd incident-race
+git clone https://github.com/maheedhar132/Sherlog.git
+cd Sherlog
 npm install
 npm run dev
 ```

@@ -1,6 +1,6 @@
 import { newProfile, type Profile } from '../ai/adapter';
 
-const KEY = 'incident-race.profile.v1';
+const KEY = 'sherlog.profile.v1';
 
 export function loadProfile(): Profile {
   try {
@@ -27,6 +27,6 @@ export function exportProfile(p: Profile): string {
 
 export function importProfile(json: string): Profile {
   const p = JSON.parse(json) as Profile;
-  if (p.v !== 1 || !p.strength || !p.faults) throw new Error('Not an Incident Race profile');
+  if (p.v !== 1 || !p.strength || !p.faults) throw new Error('Not a Sherlog profile');
   return { ...newProfile(), ...p };
 }

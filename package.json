@@ -1,5 +1,5 @@
 {
-  "name": "incident-race",
+  "name": "sherlog",
   "private": true,
   "version": "0.1.0",
   "description": "Race an adaptive AI investigator to find the root cause of a simulated production incident. Free, offline, in your browser.",

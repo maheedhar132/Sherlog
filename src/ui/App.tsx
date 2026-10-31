@@ -54,7 +54,7 @@ export function App() {
     <div className="app">
       <nav className="topnav">
         <button className="brand" onClick={() => setScreen({ name: 'home' })}>
-          🔥 Incident<b>Race</b>
+          🔍 Sher<b>log</b>
         </button>
         <button onClick={() => setGuide(true)}>Field guide</button>
       </nav>
@@ -69,7 +69,7 @@ export function App() {
             const blob = new Blob([exportProfile(profile)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'incident-race-profile.json';
+            a.download = 'sherlog-profile.json';
             a.click();
             URL.revokeObjectURL(a.href);
           }}

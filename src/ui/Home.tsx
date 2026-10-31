@@ -31,9 +31,9 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
   return (
     <div className="home">
       <section className="hero">
-        <div className="eyebrow">an on-call training game</div>
+        <div className="eyebrow">elementary, my dear SRE</div>
         <h1>
-          Incident<span>Race</span>
+          Sher<span>log</span>
         </h1>
         <p className="tagline">
           Production is on fire. You and an AI investigator get the same dashboards: metrics, logs, traces, deploys. Every query costs
@@ -145,7 +145,7 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
       </div>
 
       <footer className="foot">
-        Open source · MIT · <a href="https://github.com/">star it on GitHub</a> if it made you a better on-caller.
+        Open source · MIT · <a href="https://github.com/maheedhar132/Sherlog">star it on GitHub</a> if it made you a better on-caller.
       </footer>
     </div>
   );

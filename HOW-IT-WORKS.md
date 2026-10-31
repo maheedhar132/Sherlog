@@ -2,13 +2,13 @@
 
 A lot of tools sold as "AIOps" are scripts: *if the health check fails, restart the pod*. That's useful automation, but it isn't AI. Someone wrote the decision in advance.
 
-This document explains what the opponent in Incident Race actually does, why it counts as AI, and, just as important, **what it is not**. Every claim here can be checked against the code and the test suite.
+This document explains what the opponent in Sherlog actually does, why it counts as AI, and, just as important, **what it is not**. Every claim here can be checked against the code and the test suite.
 
 ---
 
 ## TL;DR
 
-| | Hardcoded "AIOps" script | Incident Race AI |
+| | Hardcoded "AIOps" script | Sherlog AI |
 |---|---|---|
 | Who decides the diagnosis? | A human, ahead of time (`if X then Y`) | The algorithm, at runtime, from evidence |
 | Can it handle a combination nobody wrote a rule for? | No. Unknown cases fall through | Yes. It reasons over every hypothesis the topology allows |
