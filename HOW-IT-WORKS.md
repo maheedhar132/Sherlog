@@ -54,7 +54,7 @@ This is the actual output of the shipped AI at Normal strength on seed 446: a re
 | 3 | Opens `logs:shipping` | Retry storm @ shipping **84%** (it found retries: the red herring) |
 | 4 | Declares shipping | **Wrong, +20 s.** Now pricing 88% |
 | 5 | Declares pricing | Correct |
-| 6 | Applies the fix: revert the retries and add backoff | MTTR 4:16 |
+| 6 | Applies the fix: revert the retries and add backoff | MTTR 3:14 |
 
 It was fooled by the red herring, paid for it, recovered and fixed the problem. A script that matches "retries in the logs" would have stopped at step 3.
 

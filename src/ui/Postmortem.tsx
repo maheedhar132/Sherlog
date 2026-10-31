@@ -70,7 +70,10 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
   return (
     <div className="postmortem">
       <header className="pm-head">
-        <h1>{headline}</h1>
+        <div>
+          <h1>{headline}</h1>
+          {result.breached && <p className="muted">🔥 SLO breached: the incident burned the whole 10-minute error budget.</p>}
+        </div>
         <div className="pm-score">
           <div>
             <span>Your MTTR</span>

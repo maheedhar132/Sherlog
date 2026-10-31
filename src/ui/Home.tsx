@@ -182,7 +182,7 @@ export function Home({ profile, onPlay, onTutorial, onDaily, onOpenGuide, onImpo
                     <li key={f}>
                       <span>{FAULTS[f].name}</span>
                       <div className="bar">
-                        <div style={{ width: `${Math.round(mean * 100)}%` }} />
+                        <div style={{ width: `${s.played ? Math.round(mean * 100) : 0}%` }} />
                       </div>
                       <small>
                         {s.played ? `${s.played} played${s.avgMttr !== null ? ` · ${fmt(s.avgMttr)} avg` : ''}` : 'not seen yet'}

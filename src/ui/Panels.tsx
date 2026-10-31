@@ -76,7 +76,7 @@ function MetricChart({ series, slo, markers, hover, onHover }: ChartProps) {
           {slo !== undefined && slo < max && <line className="slo" x1={padL} x2={w - padL} y1={y(slo)} y2={y(slo)} />}
           {markers.map((m, i) => (
             <g key={i}>
-              <path className="marker" d={`M${x(m.t)},${h - 1} l-3.5,-6 l7,0 z`} />
+              <path className="marker" d={`M${x(m.t)},${h - 7} l-3.5,6 l7,0 z`} />
               <title>{m.label}</title>
             </g>
           ))}

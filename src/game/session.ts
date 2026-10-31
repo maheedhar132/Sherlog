@@ -30,6 +30,8 @@ export interface PlayerAction {
 
 export interface MatchResult {
   won: boolean;
+  /** True when the incident outlasted the whole SLO error budget. */
+  breached?: boolean;
   /** Null when you never found the root cause. */
   playerMttr: number | null;
   aiMttr: number;
@@ -107,7 +109,7 @@ export function shareText(setup: MatchSetup, result: MatchResult, url: string, s
   const fire = setup.daily && streak >= 2 ? ` · 🔥 ${streak}` : '';
   const title = setup.daily ? `Sherlog · Daily #${setup.daily.number}${fire}` : `Sherlog · ${setup.mode}`;
   const you = result.playerMttr === null ? 'unsolved' : fmt(result.playerMttr);
-  const verdict = result.won ? 'beat the AI 🏆' : 'lost to the AI 🤖';
+  const verdict = `${result.won ? 'beat the AI 🏆' : 'lost to the AI 🤖'}${result.breached ? ' · SLO breached 🔥' : ''}`;
   // A shared result links to the exact incident, so a friend can try to beat it.
   const link = setup.daily || setup.tutorial ? url : `${url}#seed=${setup.incident.seed}&mode=${setup.mode}${setup.forced ? `&fault=${setup.forced}` : ''}`;
   return `${title}\nMTTR ${you} vs AI ${fmt(result.aiMttr)}: ${verdict}\n${trail || '⬛'}\n${link}`;

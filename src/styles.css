@@ -1393,3 +1393,23 @@ h3 {
     display: none;
   }
 }
+
+/* ---------------------------------------------------------------- phone: keep the clocks in view */
+
+.query-cta {
+  min-height: 120px;
+}
+@media (max-width: 560px) {
+  .race-bar {
+    position: sticky;
+    top: 0;
+    padding: 6px 10px;
+  }
+  .race-bar .page-lines,
+  .race-track .stops {
+    display: none;
+  }
+  .clock b {
+    font-size: 20px;
+  }
+}

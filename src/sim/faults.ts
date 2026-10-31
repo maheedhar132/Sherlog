@@ -113,7 +113,7 @@ export const FAULTS: Record<FaultId, FaultDef> = {
     short: 'Aggressive retries multiply traffic and flatten a dependency',
     targets: ['app'],
     story: (s) =>
-      `A config change gave ${s} three immediate retries with no backoff. One slow response turned into 3× the traffic, which overloaded its dependencies, which made more calls slow, which caused more retries.`,
+      `${s}'s client was set to make three immediate retries with no backoff. One slow response turned into 3× the traffic, which overloaded its dependencies, which made more calls slow, which caused more retries.`,
     signals: [
       'One service logs aggressive retries ("attempt 3/3")',
       'Its traces show the same downstream call repeated 3×',

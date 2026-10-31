@@ -75,7 +75,7 @@ export function aiParams(strength: number): AiParams {
   return {
     temperature: 0.03 + 0.5 * (1 - s),
     threshold: 0.75 + 0.22 * s,
-    thinkSeconds: Math.max(2.5, 60 - 45 * Math.min(strength, MAX_STRENGTH)),
+    thinkSeconds: Math.max(2.5, 40 - 30 * Math.min(strength, MAX_STRENGTH)),
     randomQuery: 0.35 * (1 - s),
   };
 }

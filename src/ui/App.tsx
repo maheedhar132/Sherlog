@@ -71,13 +71,18 @@ export function App() {
     setScreen({ name: 'post', setup, result, before: recorded.before, after: recorded.after });
   };
 
+  // No runbook on Hard: the field guide lists every signal and fix.
+  const lockGuide = screen.name === 'match' && screen.setup.mode === 'hard' && !screen.setup.tutorial;
+
   return (
     <div className="app">
       <nav className="topnav">
         <button className="brand" onClick={() => setScreen({ name: 'home' })}>
           🔍 Sher<b>log</b>
         </button>
-        <button onClick={() => setGuide(true)}>Field guide</button>
+        <button onClick={() => setGuide(true)} disabled={lockGuide} title={lockGuide ? 'No runbook on Hard' : undefined}>
+          Field guide{lockGuide ? ' (off in Hard)' : ''}
+        </button>
       </nav>
 
       {screen.name === 'home' && (

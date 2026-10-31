@@ -124,6 +124,8 @@ export function recordMatch(profile: Profile, rec: MatchRecord): { profile: Prof
 
 /** The fault type you currently do worst on (by posterior mean), once you've seen it at least once. */
 export function weakestFault(profile: Profile): FaultId | null {
+  // Too few matches to say anything meaningful yet.
+  if (profile.played < 3) return null;
   const seen = FAULT_IDS.filter((f) => profile.faults[f].played > 0);
   if (!seen.length) return null;
   return seen.reduce((w, f) => {

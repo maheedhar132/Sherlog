@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { newProfile } from '../src/ai/adapter';
+import { newProfile, weakestFault } from '../src/ai/adapter';
 import { TUTORIAL_SEED, createFromSeed, createMatch, createTutorial, parseIncidentHash, shareText } from '../src/game/session';
 import { importProfile } from '../src/lib/storage';
 import { detectAlerts } from '../src/sim/detect';
@@ -56,6 +56,17 @@ describe('pages', () => {
       const inc = generateIncident({ seed, mode: 'normal' });
       for (const p of pages(inc, detectAlerts(inc))) expect(p.text.startsWith(p.service)).toBe(true);
     }
+  });
+});
+
+describe('the weakest-area label', () => {
+  it('waits for a few matches before naming one', () => {
+    const p = newProfile();
+    p.played = 2;
+    p.faults.retry_storm = { a: 1, b: 4, played: 1, solved: 0, avgMttr: null };
+    expect(weakestFault(p)).toBeNull();
+    p.played = 3;
+    expect(weakestFault(p)).toBe('retry_storm');
   });
 });
 

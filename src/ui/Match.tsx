@@ -53,14 +53,17 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   const [phase, setPhase] = useState<'running' | 'lost' | 'practice'>('running');
   const [declService, setDeclService] = useState(t.services[0].id);
   // Starts on the gateway, where no fault originates, so Declare stays disabled until a service is picked.
-  const [declFault, setDeclFault] = useState<FaultId>(FAULT_IDS[0]);
+  const [declFault, setDeclFault] = useState<FaultId | ''>('');
+  const breachedRef = useRef(false);
+  const [wrongNote, setWrongNote] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [mapExpanded, setMapExpanded] = useState(false);
   const [mitigating, setMitigating] = useState(false);
   const [badFixes, setBadFixes] = useState<FixId[]>([]);
   const [hints, setHints] = useState(0);
   const [confirmGiveUp, setConfirmGiveUp] = useState(false);
-  const [coachOn, setCoachOn] = useState(() => !!setup.tutorial || (loadCoachPref() ?? coachDefault));
+  // No runbook on Hard, so no coach there either.
+  const [coachOn, setCoachOn] = useState(() => !!setup.tutorial || (setup.mode !== 'hard' && (loadCoachPref() ?? coachDefault)));
 
   useEffect(() => {
     const id = setInterval(() => setWall((performance.now() - startRef.current) / 1000), 200);
@@ -84,6 +87,13 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   }, [phase, mitigating, setup.tutorial, aiNow.finished, clock, ai.mttr]);
 
   useEffect(() => {
+    if (clock >= ERROR_BUDGET_SECONDS && !breachedRef.current) {
+      breachedRef.current = true;
+      setToast('🔥 SLO error budget exhausted: the incident is now a breach');
+    }
+  }, [clock]);
+
+  useEffect(() => {
     if (!toast) return;
     const id = setTimeout(() => setToast(null), 2400);
     return () => clearTimeout(id);
@@ -91,11 +101,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
 
   // Only offer faults that can physically happen on that kind of service (the AI's hypothesis space is the same).
   const validFaults = (id: string) => FAULT_IDS.filter((f) => isCompatible(t, id, f));
-  const pickDeclService = (id: string) => {
-    setDeclService(id);
-    const valid = validFaults(id);
-    if (valid.length && !valid.includes(declFault)) setDeclFault(valid[0]);
-  };
+  const pickDeclService = (id: string) => setDeclService(id);
 
   const select = (id: string) => {
     setSelected(id);
@@ -115,6 +121,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   };
 
   const declare = () => {
+    if (!declFault) return;
     const hyp = { service: declService, fault: declFault };
     const correct = sameHypothesis(hyp, truth);
     const penalty = correct ? 0 : nextPenalty;
@@ -122,6 +129,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
     if (!correct) {
       setExtra((e) => e + penalty);
       setToast(`✗ Not it: ${FAULTS[declFault].name} on ${declService}. +${penalty}s`);
+      setWrongNote(`Not ${FAULTS[declFault].name} on ${declService}. Compare that service's own signals with what it depends on.`);
       return;
     }
     // Diagnosis is not the end of the incident: now stop the bleeding.
@@ -139,7 +147,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
       setToast(`✗ That does not stop it. +${penalty}s`);
       return;
     }
-    onFinish({ won: phase === 'running' && clock < ai.mttr, playerMttr: clock, aiMttr: ai.mttr, actions: all });
+    onFinish({ won: phase === 'running' && clock < ai.mttr, playerMttr: clock, aiMttr: ai.mttr, actions: all, breached: clock >= ERROR_BUDGET_SECONDS });
   };
 
   const giveUp = () => onFinish({ won: false, playerMttr: null, aiMttr: ai.mttr, actions });
@@ -317,6 +325,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
                 )}
               </div>
               <p className="nudge">{nudge}</p>
+              {wrongNote && <p className="hint-text">✗ {wrongNote}</p>}
               {tips.length > 0 && (
                 <ul className="tips">
                   {tips.map((tip) => (
@@ -345,16 +354,27 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
             </label>
             <label>
               Fault
-              <select value={declFault} onChange={(e) => setDeclFault(e.target.value as FaultId)}>
-                {validFaults(declService).map((f) => (
-                  <option key={f} value={f}>
-                    {FAULTS[f].name}
-                  </option>
-                ))}
-                {!validFaults(declService).length && <option>(the edge only relays errors)</option>}
+              <select value={declFault} onChange={(e) => setDeclFault(e.target.value as FaultId | '')}>
+                <option value="">Choose a fault…</option>
+                {validFaults(declService).length > 0 && (
+                  <optgroup label="Fits this kind of service">
+                    {validFaults(declService).map((f) => (
+                      <option key={f} value={f}>
+                        {FAULTS[f].name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                <optgroup label="Other faults">
+                  {FAULT_IDS.filter((f) => !validFaults(declService).includes(f)).map((f) => (
+                    <option key={f} value={f}>
+                      {FAULTS[f].name}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </label>
-            <button className="primary" onClick={declare} disabled={!validFaults(declService).includes(declFault)}>
+            <button className="primary" onClick={declare} disabled={!declFault || t.byId[declService].kind === 'gateway'}>
               Declare
             </button>
             <p className="hint">
@@ -364,7 +384,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
             <button onClick={useHint} disabled={hints >= 3} title="Hint (H)">
               💡 {hints >= 3 ? 'No more hints' : `Hint (${setup.tutorial ? 'free' : `+${HINT_COST}s`})`}
             </button>
-            {!coachOn && (
+            {!coachOn && setup.mode !== 'hard' && (
               <button className="link-btn" onClick={toggleCoach}>
                 Show the coach
               </button>
@@ -401,9 +421,9 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
                 {tab === 'deploys' ? 'Pull the change history: deploys and config or flag changes.' : `Pull ${tab} for ${svc.id}.`} Costs{' '}
                 <b>{COST[tab]}s</b> of investigation time.
               </p>
-              <button className="primary big" onClick={() => runQuery(currentKey)}>
-                {CHANNEL_ICON[tab]} Run query · +{COST[tab]}s
-              </button>
+              <p className="hint">
+                Press <b>Run</b> above, or the R key.
+              </p>
             </div>
           ) : tab === 'metrics' ? (
             <MetricsPanel series={incident.data.metrics[selected]} markers={markers} />
