@@ -4,6 +4,10 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-31
+
+Daily streaks, fairer rules, a visible AI reasoning trace, and claims that match what the game does.
+
 ### Added
 
 - **AI reasoning panel** in the postmortem: the AI's top suspects and their probabilities after every step, so you can see why it opened each dashboard.
@@ -44,5 +48,6 @@ The first public release.
 - Field guide, profile export and import, and link-preview images for social sharing.
 - [HOW-IT-WORKS.md](HOW-IT-WORKS.md), explaining why the opponent is AI and not hardcoded rules, backed by a test that a new fault type needs no AI code changes.
 
-[Unreleased]: https://github.com/maheedhar132/Sherlog/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/maheedhar132/Sherlog/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/maheedhar132/Sherlog/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/maheedhar132/Sherlog/releases/tag/v1.0.0
