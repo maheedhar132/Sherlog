@@ -1416,3 +1416,23 @@ h3 {
     font-size: 20px;
   }
 }
+
+.rival-alert {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(239, 83, 80, 0.14);
+  border: 1px solid var(--bad);
+  font-weight: 600;
+  animation: rival-pulse 1.6s ease-in-out infinite;
+}
+@keyframes rival-pulse {
+  50% {
+    background: rgba(239, 83, 80, 0.26);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rival-alert {
+    animation: none;
+  }
+}

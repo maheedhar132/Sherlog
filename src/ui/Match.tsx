@@ -226,6 +226,16 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   const youProgress = mitigating ? 0.75 : queried.size ? 0.25 + Math.min(0.4, queried.size * 0.06) : 0.1;
   const budgetUsed = Math.min(1, clock / ERROR_BUDGET_SECONDS);
   const nextAi = ai.actions.find((a) => a.wall > wall);
+  // The rival closing in: no conclusions are shown, only how little time is left to beat it.
+  const aiDiagnosed = aiNow.visible.some((a) => a.kind === 'declare' && a.correct);
+  const rivalAlert =
+    phase === 'running' && !setup.tutorial && !aiNow.finished
+      ? aiDiagnosed
+        ? `🤖 The AI has found the cause and is applying the fix: about ${Math.max(1, Math.ceil(ai.wallEnd - wall))}s left to beat it`
+        : nextAi?.kind === 'declare' && nextAi.wall - wall <= 12
+          ? '🤖 The AI is about to commit to a diagnosis'
+          : null
+      : null;
   const aiEta = !aiNow.finished && nextAi ? Math.max(1, Math.ceil(nextAi.wall - wall)) : null;
   // No runbook on Hard: the field guide lists every signal and fix.
   const guideLocked = setup.mode === 'hard' && !setup.tutorial;
@@ -288,6 +298,11 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
           </div>
         </div>
       </header>
+      {rivalAlert && (
+        <div className="rival-alert" role="status">
+          {rivalAlert}
+        </div>
+      )}
 
       <section className="card map-strip">
         <div className="card-head">

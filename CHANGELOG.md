@@ -23,6 +23,7 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 - The service map is a full-width strip, readable without expanding it.
 - Every system now has a queue and a worker. Easy systems are smaller, Hard systems are bigger and lose one signal on the culprit, so the three modes differ by more than AI speed.
 - The AI treats a deploy and a config change as different evidence and commits when no remaining dashboard is worth its time cost.
+- **A rival closing in:** a pulsing banner warns when the AI is about to commit to a diagnosis, and counts down once it has found the cause and is applying the fix. It never shows what the AI concluded.
 - **Stopgap fixes:** for faults where an obvious fix helps for a minute without removing the cause (scaling out a leak, failing over a saturated database), one option is a stopgap. It costs less than a plain wrong fix, and the postmortem explains why it only treats the symptom.
 - **Aftershocks:** on Normal and Hard, fixing an incident can leave a second, unrelated fault on the same system, with a fresh race against the AI. It is decided by the seed, so a shared link behaves the same for everyone.
 - **On-call shift:** three incidents back to back, scored as one run (your total time against the AI's), with your best shift kept in your profile and a shareable summary.
