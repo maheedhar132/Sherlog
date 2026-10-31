@@ -182,7 +182,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
     const top = latest?.suspects[0];
     setPeeks((p) => [...p, top ? `The AI is leaning towards ${top.hyp.service} (${Math.round(top.p * 100)}% sure)` : 'The AI has not formed a view yet']);
     setExtra((e) => e + PEEK_COST);
-    setActions((a) => [...a, { kind: 'hint', clock, cost: PEEK_COST }]);
+    setActions((a) => [...a, { kind: 'hint', peek: true, clock, cost: PEEK_COST }]);
   };
   const hintTexts = [
     `The culprit is ${KIND_WORD[t.byId[truth.service].kind]}.`,
@@ -217,8 +217,10 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
     ? 'You found it. Now pick the fix that stops the bleeding.'
     : queried.size === 0
       ? 'Start with a paging service: click it on the map, then pull its metrics.'
-      : services.size < 2
-        ? 'That service may only be a victim. Click something it depends on and compare.'
+      : services.size < 2 && tips.length > 0
+        ? 'That looks like a real signal. Confirm it in another dashboard or on a dependency, then declare.'
+        : services.size < 2
+        ? 'Nothing clear yet, and this service may only be a victim. Click something it depends on and compare.'
         : tips.length === 0
           ? 'Nothing odd there: rule it out and look somewhere else.'
           : 'Found a tell-tale sign? Confirm it in another dashboard, then declare.';

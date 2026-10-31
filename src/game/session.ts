@@ -31,6 +31,8 @@ export interface PlayerAction {
   correct?: boolean;
   /** A fix that helps for a minute without removing the cause. */
   partial?: boolean;
+  /** A hint that was a paid peek at the AI's top suspect. */
+  peek?: boolean;
   /** Your incident clock when you took the action. */
   clock: number;
   cost: number;

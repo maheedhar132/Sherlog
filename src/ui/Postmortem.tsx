@@ -139,7 +139,7 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
                   : a.kind === 'fix'
                     ? `${a.correct ? '🔧 fixed' : a.partial ? '🩹 stopgap' : '✗ wrong fix'}: ${FIXES[a.fix!]}${a.correct ? '' : ` (+${a.cost}s)`}`
                     : a.kind === 'hint'
-                      ? `💡 hint${a.cost ? ` (+${a.cost}s)` : ''}`
+                      ? `${a.peek ? '👁 peeked at the AI' : '💡 hint'}${a.cost ? ` (+${a.cost}s)` : ''}`
                       : `${CHANNEL_ICON[describeQuery(a.key!).channel]} ${a.key}${isKey(a.key!) ? ' ⭐' : ''}`}
               </li>
             ))}
