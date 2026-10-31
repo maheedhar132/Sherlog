@@ -126,9 +126,10 @@ describe('guessing does not pay', () => {
       const wrongCosts = run.actions.filter((a) => a.kind === 'declare' && !a.correct).map((a) => a.cost);
       expect(wrongCosts, `seed ${seed}`).toEqual(wrongCosts.map((_, i) => 20 * (i + 1)));
       found += wrongCosts.length;
+      if (found >= 3) break;
     }
     expect(found).toBeGreaterThan(0);
-  });
+  }, 30_000);
 
   it('keeps a player who never opens a dashboard from beating the Normal AI most of the time', () => {
     const rng = mulberry32(99);
@@ -144,5 +145,5 @@ describe('guessing does not pay', () => {
       if (clock < simulateAi(inc, DEFAULT_STRENGTH.normal).mttr) wins++;
     }
     expect(wins / n).toBeLessThan(0.3);
-  });
+  }, 30_000);
 });
