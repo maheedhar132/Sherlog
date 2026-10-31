@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { PLACEMENT_MATCHES, TARGET_WIN_RATE, weakestFault, type Profile } from '../ai/adapter';
 import { fmt, todayKey } from '../game/session';
+import { streakView } from '../game/streak';
 import { FAULTS, FAULT_IDS } from '../sim/faults';
 import type { Mode } from '../sim/types';
 
@@ -27,6 +28,9 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
   const recent = profile.history.slice(0, 20);
   const wins = recent.filter((h) => h.won).length;
   const dailyDone = profile.daily?.date === todayKey() ? profile.daily : null;
+  const streak = streakView(profile.streak, todayKey());
+  const ds = profile.dailyStats;
+  const pct = (n: number) => (ds.played ? `${Math.round((n / ds.played) * 100)}%` : '–');
 
   return (
     <div className="home">
@@ -70,6 +74,11 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
             ) : (
               <span>fixed AI · normal mode</span>
             )}
+            {streak.current > 0 && (
+              <span className="streak">
+                🔥 {streak.current}-day streak{streak.atRisk && !dailyDone ? ': solve today to keep it' : ''}
+              </span>
+            )}
           </div>
         </button>
       </section>
@@ -106,6 +115,30 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
                   </>
                 )}
               </p>
+              {ds.played > 0 && (
+                <div className="daily-stats" aria-label="Daily incident stats">
+                  <div>
+                    <b>{ds.played}</b>
+                    <span>dailies played</span>
+                  </div>
+                  <div>
+                    <b>{pct(ds.solved)}</b>
+                    <span>solved</span>
+                  </div>
+                  <div>
+                    <b>{pct(ds.won)}</b>
+                    <span>beat the AI</span>
+                  </div>
+                  <div>
+                    <b>{streak.current}</b>
+                    <span>current streak</span>
+                  </div>
+                  <div>
+                    <b>{streak.best}</b>
+                    <span>best streak</span>
+                  </div>
+                </div>
+              )}
               <ul className="skills">
                 {FAULT_IDS.map((f) => {
                   const s = profile.faults[f];

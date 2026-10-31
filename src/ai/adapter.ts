@@ -34,6 +34,20 @@ export interface MatchRecord {
   daily: boolean;
 }
 
+/** Daily-incident streak. A day counts when you solve it (name the root cause), win or lose against the AI. */
+export interface Streak {
+  current: number;
+  best: number;
+  /** Local date (YYYY-MM-DD) of the last solved daily. */
+  last: string | null;
+}
+
+export interface DailyStats {
+  played: number;
+  solved: number;
+  won: number;
+}
+
 export interface Profile {
   v: 1;
   strength: Record<Mode, number>;
@@ -41,12 +55,22 @@ export interface Profile {
   faults: Record<FaultId, FaultStat>;
   history: MatchRecord[];
   daily?: { date: string; won: boolean; playerMttr: number | null; aiMttr: number; share: string };
+  streak: Streak;
+  dailyStats: DailyStats;
 }
 
 export function newProfile(): Profile {
   const faults = {} as Record<FaultId, FaultStat>;
   for (const f of FAULT_IDS) faults[f] = { a: 1, b: 1, played: 0, solved: 0, avgMttr: null };
-  return { v: 1, strength: { ...DEFAULT_STRENGTH }, played: 0, faults, history: [] };
+  return {
+    v: 1,
+    strength: { ...DEFAULT_STRENGTH },
+    played: 0,
+    faults,
+    history: [],
+    streak: { current: 0, best: 0, last: null },
+    dailyStats: { played: 0, solved: 0, won: 0 },
+  };
 }
 
 /** Stochastic-approximation step: at equilibrium, P(you win | strength) = target. */
