@@ -4,7 +4,8 @@
 
 **Production is on fire. Race an AI on-call engineer to the root cause. It learns how you debug.**
 
-<!-- After the first Vercel deploy, replace this line with: [▶ Play in your browser](https://<your-project>.vercel.app) -->
+### [▶ Play now at sherlog-five.vercel.app](https://sherlog-five.vercel.app/)
+
 free · offline · no account · no API keys
 
 [![CI](https://github.com/maheedhar132/Sherlog/actions/workflows/ci.yml/badge.svg)](https://github.com/maheedhar132/Sherlog/actions/workflows/ci.yml)

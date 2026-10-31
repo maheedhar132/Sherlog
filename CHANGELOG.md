@@ -4,6 +4,10 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+
+- README links to the live game at https://sherlog-five.vercel.app/
+
 ## [1.0.0] - 2026-10-31
 
 The first public release.
