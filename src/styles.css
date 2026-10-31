@@ -1496,3 +1496,23 @@ h3 {
   border-color: var(--accent);
   color: var(--accent);
 }
+
+.table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.chip .calls {
+  flex-basis: 100%;
+}
+.chip {
+  flex-wrap: wrap;
+}
+
+/* Let grid children shrink so wide tables scroll inside their card instead of stretching it. */
+.card,
+.col-main,
+.col-left,
+.col-right,
+.match > * {
+  min-width: 0;
+}

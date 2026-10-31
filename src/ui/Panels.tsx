@@ -224,6 +224,7 @@ export function TracePanel({ root }: { root: Span }) {
 export function DeploysPanel({ events }: { events: DeployEvent[] }) {
   const rows = [...events.map((e) => ({ t: e.t, e })), { t: ONSET, e: null }].sort((a, b) => a.t - b.t);
   return (
+    <div className="table-scroll">
     <table className="deploys">
       <thead>
         <tr>
@@ -255,5 +256,6 @@ export function DeploysPanel({ events }: { events: DeployEvent[] }) {
         )}
       </tbody>
     </table>
+    </div>
   );
 }

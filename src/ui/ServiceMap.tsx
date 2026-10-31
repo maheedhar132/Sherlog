@@ -141,6 +141,7 @@ export function ServiceChips({ topology, alerts, selected, queried, onSelect }: 
               {KIND_LABEL[s.kind]}
               {seen ? ` · ${seen}` : ''}
             </small>
+            {s.deps.length > 0 && <small className="calls">→ {s.deps.join(', ')}</small>}
           </button>
         );
       })}
