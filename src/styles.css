@@ -1436,3 +1436,39 @@ h3 {
     animation: none;
   }
 }
+
+.recovery {
+  margin: 12px 0;
+}
+.recovery svg {
+  width: 100%;
+  height: 110px;
+  background: var(--panel-2, rgba(255, 255, 255, 0.03));
+  border-radius: 8px;
+}
+.recovery .base {
+  stroke: var(--good);
+  stroke-dasharray: 4 4;
+  opacity: 0.6;
+}
+.recovery .cut {
+  stroke: var(--muted);
+  stroke-dasharray: 2 3;
+}
+.recovery .line {
+  stroke-width: 2.5;
+}
+.recovery .line.fixed {
+  stroke: var(--good);
+}
+.recovery .line.stopgap {
+  stroke: var(--warn, #f5a623);
+}
+.recovery .line.wrong {
+  stroke: var(--bad);
+}
+.recovery-title {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 4px;
+}

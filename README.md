@@ -28,6 +28,7 @@ Incidents are generated from a seed (random service graph, culprit, noise and re
 - **21 kinds of failure**, from memory leaks and retry storms to expired certificates, full disks, GC pauses, clock skew, lock contention, runaway batch jobs, vendor rate limits and stuck queue consumers. Some page nobody at all, and one is just real demand where scaling out is the right fix.
 - **Diagnose, then fix.** Pick the mitigation that actually stops the bleeding; the postmortem explains why the tempting ones don't work.
 - **A race track.** Watch you and the AI move from paged to mitigated while an SLO error budget burns (the AI's run is precomputed and replayed against your clock). Every result shares a link to the exact incident, so a friend can try to beat it.
+- **Watch the fix work.** Your chosen fix plays out on a latency chart: a cure recovers, a stopgap dips and climbs back.
 - **Stopgaps.** Some fixes only buy a minute. Pick the one that removes the cause.
 - **Aftershocks.** Fix one failure and a second, unrelated one can surface on the same system.
 - **On-call shift.** Three incidents in a row, scored together, with a personal best to beat.

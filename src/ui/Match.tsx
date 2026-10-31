@@ -5,6 +5,7 @@ import { loadCoachPref, saveCoachPref } from '../lib/storage';
 import { COST, WRONG_PENALTY, wrongPenalty } from '../sim/constants';
 import { detectAlerts, observe } from '../sim/detect';
 import { shortlist } from '../game/shortlist';
+import { RECOVERY_MS, Recovery, type RecoveryKind } from './Recovery';
 import { FAULTS, FAULT_IDS, isCompatible } from '../sim/faults';
 import { FIXES, FIX_FOR, STOPGAP_FOR, fixOptions, type FixId } from '../sim/fixes';
 import { queryCost, sameHypothesis } from '../sim/incident';
@@ -57,6 +58,9 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   const [declFault, setDeclFault] = useState<FaultId | ''>('');
   const breachedRef = useRef(false);
   const [wrongNote, setWrongNote] = useState<string | null>(null);
+  const [recovery, setRecovery] = useState<RecoveryKind | null>(null);
+  const recoveryTimer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(recoveryTimer.current), []);
   const [toast, setToast] = useState<string | null>(null);
   const [mapExpanded, setMapExpanded] = useState(false);
   const [mitigating, setMitigating] = useState(false);
@@ -145,13 +149,18 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
     const penalty = correct ? 0 : partial ? STOPGAP_PENALTY : nextFixPenalty;
     const all = [...actions, { kind: 'fix' as const, fix, correct, partial, clock, cost: penalty }];
     setActions(all);
+    // Show the service responding to the fix before moving on.
+    setRecovery(correct ? 'fixed' : partial ? 'stopgap' : 'wrong');
+    const result = { won: phase === 'running' && clock < ai.mttr, playerMttr: clock, aiMttr: ai.mttr, actions: all, breached: clock >= ERROR_BUDGET_SECONDS };
+    recoveryTimer.current = setTimeout(() => {
+      setRecovery(null);
+      if (correct) onFinish(result);
+    }, RECOVERY_MS);
     if (!correct) {
       setBadFixes((b) => [...b, fix]);
       setExtra((e) => e + penalty);
       setToast(partial ? `🩹 Errors dip, then climb back: that only treats the symptom. +${penalty}s` : `✗ That does not stop it. +${penalty}s`);
-      return;
     }
-    onFinish({ won: phase === 'running' && clock < ai.mttr, playerMttr: clock, aiMttr: ai.mttr, actions: all, breached: clock >= ERROR_BUDGET_SECONDS });
   };
 
   const giveUp = () => onFinish({ won: false, playerMttr: null, aiMttr: ai.mttr, actions });
@@ -558,6 +567,9 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
           <p>
             <b>{FAULTS[truth.fault].name}</b> on <code>{truth.service}</code>. The clock is still running: stop the bleeding.
           </p>
+          {recovery ? (
+            <Recovery kind={recovery} service={truth.service} />
+          ) : (
           <div className="fix-options">
             {options.map((f) => (
               <button key={f} className="fix" onClick={() => chooseFix(f)} disabled={badFixes.includes(f)}>
@@ -565,6 +577,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
               </button>
             ))}
           </div>
+          )}
           <p className="hint">A wrong fix costs +{nextFixPenalty}s, and the next one more. Some fixes only buy a minute: choose the one that removes the cause.</p>
         </Modal>
       )}
