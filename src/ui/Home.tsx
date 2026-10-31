@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { PLACEMENT_MATCHES, TARGET_WIN_RATE, weakestFault, type Profile } from '../ai/adapter';
 import { fmt, todayKey } from '../game/session';
+import { streakView } from '../game/streak';
 import { FAULTS, FAULT_IDS } from '../sim/faults';
 import type { Mode } from '../sim/types';
 
@@ -27,6 +28,9 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
   const recent = profile.history.slice(0, 20);
   const wins = recent.filter((h) => h.won).length;
   const dailyDone = profile.daily?.date === todayKey() ? profile.daily : null;
+  const streak = streakView(profile.streak, todayKey());
+  const ds = profile.dailyStats;
+  const pct = (n: number) => (ds.played ? `${Math.round((n / ds.played) * 100)}%` : '–');
 
   return (
     <div className="home">
@@ -37,9 +41,9 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
         </h1>
         <p className="tagline">
           Production is on fire. You and an AI investigator get the same dashboards: metrics, logs, traces, deploys. Every query costs
-          time. First to name the root cause wins. <b>The AI learns how you debug</b> and adapts, so every incident stays a fight.
+          time. First to name the root cause wins. <b>The AI adapts to how well you do</b> and serves more of the incidents you're weakest at, so every one stays a fight.
         </p>
-        <p className="sub">100% free and offline · runs in your browser · no account, no API keys, no tracking</p>
+        <p className="sub">free · runs entirely in your browser · no server, no account, no API keys, no tracking</p>
       </section>
 
       {placement && (
@@ -70,6 +74,11 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
             ) : (
               <span>fixed AI · normal mode</span>
             )}
+            {streak.current > 0 && (
+              <span className="streak">
+                🔥 {streak.current}-day streak{streak.atRisk && !dailyDone ? ': solve today to keep it' : ''}
+              </span>
+            )}
           </div>
         </button>
       </section>
@@ -84,7 +93,7 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
               plus query costs.
             </li>
             <li>
-              <b>Declare</b> the service and fault. A wrong answer adds 20s.
+              <b>Declare</b> the service and fault. A wrong answer adds 20s, and each further miss costs 20s more, so guessing doesn't pay.
             </li>
             <li>The <b>postmortem</b> replays your path next to the AI's, so you see exactly where it was smarter.</li>
           </ol>
@@ -106,6 +115,30 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
                   </>
                 )}
               </p>
+              {ds.played > 0 && (
+                <div className="daily-stats" aria-label="Daily incident stats">
+                  <div>
+                    <b>{ds.played}</b>
+                    <span>dailies played</span>
+                  </div>
+                  <div>
+                    <b>{pct(ds.solved)}</b>
+                    <span>solved</span>
+                  </div>
+                  <div>
+                    <b>{pct(ds.won)}</b>
+                    <span>beat the AI</span>
+                  </div>
+                  <div>
+                    <b>{streak.current}</b>
+                    <span>current streak</span>
+                  </div>
+                  <div>
+                    <b>{streak.best}</b>
+                    <span>best streak</span>
+                  </div>
+                </div>
+              )}
               <ul className="skills">
                 {FAULT_IDS.map((f) => {
                   const s = profile.faults[f];

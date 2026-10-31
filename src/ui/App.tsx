@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { newProfile, recordMatch, type Profile } from '../ai/adapter';
 import { createDaily, createMatch, shareText, type MatchResult, type MatchSetup } from '../game/session';
+import { recordDaily } from '../game/streak';
 import { exportProfile, importProfile, loadProfile, saveProfile } from '../lib/storage';
 import type { Mode } from '../sim/types';
 import { FieldGuide } from './FieldGuide';
@@ -28,7 +29,7 @@ export function App() {
   const play = (mode: Mode) => setScreen({ name: 'match', setup: createMatch(profile, mode) });
 
   const finish = (setup: MatchSetup, result: MatchResult) => {
-    const { profile: next, before, after } = recordMatch(profile, {
+    const recorded = recordMatch(profile, {
       at: new Date().toISOString(),
       mode: setup.mode,
       fault: setup.incident.truth.fault,
@@ -37,17 +38,19 @@ export function App() {
       aiMttr: result.aiMttr,
       daily: !!setup.daily,
     });
+    let next = recorded.profile;
     if (setup.daily) {
+      next = recordDaily(next, setup.daily.date, result.won, result.playerMttr !== null);
       next.daily = {
         date: setup.daily.date,
         won: result.won,
         playerMttr: result.playerMttr,
         aiMttr: result.aiMttr,
-        share: shareText(setup, result, location.href.split('#')[0]),
+        share: shareText(setup, result, location.href.split('#')[0], next.streak.current),
       };
     }
     setProfile(next);
-    setScreen({ name: 'post', setup, result, before, after });
+    setScreen({ name: 'post', setup, result, before: recorded.before, after: recorded.after });
   };
 
   return (

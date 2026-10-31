@@ -117,3 +117,17 @@ export function observe(inc: Incident, key: QueryKey): Set<string> {
   if (channel === 'logs') return detectLogs(inc.data.logs[service]);
   return detectTrace(inc.data.traces[service]);
 }
+
+/**
+ * Everything a player is allowed to know: the service map, which services are paging, and the dashboards
+ * they pay to open. The AI is handed only this, so it cannot read the hidden root cause by construction.
+ */
+export interface PlayerView {
+  topology: Topology;
+  alerts: Set<string>;
+  observe: (key: QueryKey) => Set<string>;
+}
+
+export function playerView(inc: Incident): PlayerView {
+  return { topology: inc.topology, alerts: detectAlerts(inc), observe: (key) => observe(inc, key) };
+}
