@@ -386,9 +386,87 @@ export const FAULTS: Record<FaultId, FaultDef> = {
       addFx(fx, s, 'traces', 'tr_self_slow');
     },
   },
+  gc_pause: {
+    id: 'gc_pause',
+    name: 'Long GC pauses',
+    short: 'Stop-the-world garbage collection stalls the service',
+    targets: ['app'],
+    story: (s) =>
+      `${s} ran with a heap that was too small for its working set. The garbage collector kept stopping the world for seconds at a time, so latency spiked in waves even though traffic, code and CPU looked ordinary.`,
+    signals: [
+      'Latency up in waves with CPU not saturated',
+      'Multi-second stop-the-world GC pauses with a nearly full heap in its own logs',
+      'Its own span is slow, with no deploy and no leak (memory does not climb)',
+    ],
+    tip: 'Slow, bursty latency with healthy CPU and a GC pause in the log points at the heap, not at traffic.',
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'lat_up');
+      addFx(fx, s, 'logs', 'log_gc');
+      addFx(fx, s, 'traces', 'tr_self_slow');
+    },
+  },
+  clock_skew: {
+    id: 'clock_skew',
+    name: 'Clock skew',
+    short: 'A drifting node clock makes tokens and signatures fail',
+    targets: ['app'],
+    story: (s) =>
+      `The clock on the node running ${s} drifted ahead after its NTP sync broke. Tokens it issued looked "from the future" to everyone else, so requests were rejected while the service itself seemed healthy.`,
+    signals: [
+      'Errors up on the service with no deploy and no resource pressure',
+      '"clock skew" / "token issued in the future" in its logs',
+      'Its own span fails quickly',
+    ],
+    tip: 'Auth errors that appear with no change and no load are often time: check the clocks.',
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'err_up');
+      addFx(fx, s, 'logs', 'log_clock');
+      addFx(fx, s, 'traces', 'tr_self_err');
+    },
+  },
+  lock_contention: {
+    id: 'lock_contention',
+    name: 'Lock contention',
+    short: 'A long migration holds a table lock and queries pile up behind it',
+    targets: ['db'],
+    story: (s) =>
+      `A schema migration on ${s} took an exclusive lock on a hot table and ran for minutes. Every query touching that table queued behind it, so latency climbed for all callers while the database stayed mostly idle.`,
+    signals: [
+      'Latency up on the database with CPU low',
+      '"waiting for lock" / "deadlock detected" in its logs',
+      'Callers slow down too, but connections are not exhausted',
+    ],
+    tip: 'A database that is slow but idle is waiting on something: look for locks before you blame load.',
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'lat_up');
+      addFx(fx, s, 'logs', 'log_lock');
+      addFx(fx, s, 'traces', 'tr_self_slow');
+    },
+  },
+  runaway_job: {
+    id: 'runaway_job',
+    name: 'Runaway batch job',
+    short: 'A scheduled job floods the service with work',
+    targets: ['app', 'db'],
+    story: (s) =>
+      `A scheduled reindex job on ${s} started with no concurrency cap. It consumed CPU and flooded the service with its own requests, so real traffic slowed down although nothing was deployed.`,
+    signals: [
+      'Traffic and CPU up together, starting on the minute',
+      '"cron job started" in its logs',
+      'Latency up, with no deploy and no config change',
+    ],
+    tip: 'Load that starts exactly on a schedule is usually a job, not users.',
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'rps_up', 'cpu_up', 'lat_up');
+      addFx(fx, s, 'logs', 'log_cron');
+      addFx(fx, s, 'traces', 'tr_self_slow');
+    },
+  },
 };
 
 export const FAULT_IDS = Object.keys(FAULTS) as FaultId[];
+/** The original seventeen: what a seed picks when no fault is forced, so old seeds and shared links keep their incident. */
+export const CORE_FAULT_IDS = FAULT_IDS.slice(0, 17);
 
 export function isCompatible(t: Topology, service: string, fault: FaultId): boolean {
   const def = FAULTS[fault];

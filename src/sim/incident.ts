@@ -1,7 +1,7 @@
 import { mulberry32, pick } from '../lib/rng';
 import { COST } from './constants';
 import { addHerrings, dropOneSignal, faultEffects } from './effects';
-import { FAULT_IDS, isCompatible } from './faults';
+import { CORE_FAULT_IDS, FAULT_IDS, isCompatible } from './faults';
 import { renderAll } from './render';
 import { generateTopology } from './topology';
 import type { FaultId, Hypothesis, Incident, Mode, QueryKey, Topology } from './types';
@@ -25,7 +25,7 @@ export function generateIncident({ seed, mode, fault, aftershockOf }: IncidentOp
   let rng = mulberry32(seed);
   const topology = generateTopology(rng, mode);
   if (aftershockOf) rng = mulberry32(seed ^ 0x5bd1e995);
-  const wanted = fault ?? pick(rng, aftershockOf ? FAULT_IDS.filter((f) => f !== aftershockOf.fault) : FAULT_IDS);
+  const wanted = fault ?? pick(rng, aftershockOf ? FAULT_IDS.filter((f) => f !== aftershockOf.fault) : CORE_FAULT_IDS);
   let targets = topology.services.filter((s) => isCompatible(topology, s.id, wanted));
   let chosen = wanted;
   if (!targets.length) {

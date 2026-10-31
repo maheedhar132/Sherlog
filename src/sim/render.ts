@@ -202,6 +202,14 @@ const FEATURE_LOGS: Record<string, (c: Ctx) => [LogLevel, string]> = {
       ['ERROR', 'write failed: No space left on device (errno 28)'],
       ['ERROR', `could not extend file "base/16384/${randInt(rng, 1000, 9999)}": No space left on device`],
     ] as [LogLevel, string][]),
+  log_gc: ({ rng }) => ['WARN', `GC pause ${randInt(rng, 18, 38) / 10}s (stop-the-world), heap ${randInt(rng, 91, 97)}% used after collection`],
+  log_clock: ({ rng }) => ['ERROR', `token rejected: issued in the future (clock skew ${randInt(rng, 40, 140)}s)`],
+  log_lock: ({ rng }) =>
+    pick(rng, [
+      ['WARN', `process waiting for ExclusiveLock on relation "orders" for ${randInt(rng, 20, 90)}s`],
+      ['ERROR', 'deadlock detected while updating relation "orders"'],
+    ] as [LogLevel, string][]),
+  log_cron: ({ rng }) => ['INFO', `cron job "${pick(rng, ['nightly-reindex', 'rebuild-search', 'recompute-stats'])}" started (concurrency unlimited)`],
   log_config: ({ rng }) => ['WARN', `config change applied: flag "${pick(rng, ['new-pricing', 'fast-checkout', 'v2-search', 'promo-banner'])}" set to on by ${pick(rng, AUTHORS)}`],
   log_poison: ({ rng }) => ['ERROR', `failed to process message offset=${randInt(rng, 100000, 999999)} (attempt 5/5), will retry: invalid payload`],
   log_dns: (c) => {

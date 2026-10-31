@@ -31,7 +31,11 @@ export type FaultId =
   | 'traffic_spike'
   | 'perf_regression'
   | 'rate_limited'
-  | 'noisy_neighbour';
+  | 'noisy_neighbour'
+  | 'gc_pause'
+  | 'clock_skew'
+  | 'lock_contention'
+  | 'runaway_job';
 
 export type Channel = 'metrics' | 'logs' | 'traces';
 export type QueryKey = `${Channel}:${string}` | 'deploys';

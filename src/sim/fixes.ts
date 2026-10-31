@@ -19,7 +19,11 @@ export type FixId =
   | 'revert_config'
   | 'drain_zone'
   | 'throttle'
-  | 'move_node';
+  | 'move_node'
+  | 'tune_heap'
+  | 'sync_clock'
+  | 'cancel_migration'
+  | 'cap_job';
 
 export const FIXES: Record<FixId, string> = {
   restart: 'Restart the service',
@@ -40,6 +44,10 @@ export const FIXES: Record<FixId, string> = {
   drain_zone: 'Drain the unhealthy zone and shift traffic',
   throttle: 'Throttle outbound calls and ask for a higher quota',
   move_node: 'Move the workload to a different node',
+  tune_heap: 'Raise the heap size and tune the garbage collector',
+  sync_clock: 'Fix NTP on the node and resync its clock',
+  cancel_migration: 'Cancel the long migration holding the lock',
+  cap_job: 'Pause the job and cap its concurrency',
 };
 
 /** The right mitigation for each fault, and why the tempting alternatives don't work. */
@@ -60,6 +68,10 @@ export const FIX_FOR: Record<FaultId, { fix: FixId; why: string }> = {
   traffic_spike: { fix: 'scale_out', why: 'Real demand outgrew capacity, so adding replicas is exactly right here: scaling out is not always the wrong answer. A rollback or restart would not create capacity.' },
   perf_regression: { fix: 'rollback', why: 'Latency rose right after a release with no errors, so roll it back. A restart would bring the same slow code back, and scaling out only hides the regression at a higher cost.' },
   rate_limited: { fix: 'throttle', why: 'The vendor is healthy; you are being limited with 429s. Throttle your own calls and ask for a higher quota. More retries and longer timeouts make the limit worse.' },
+  gc_pause: { fix: 'tune_heap', why: 'The heap is too small, so the collector keeps stopping the world. Give it more room and tune it. A restart only clears the heap for a minute, and scaling out spreads a problem each replica has.' },
+  clock_skew: { fix: 'sync_clock', why: 'The node clock drifted, so tokens look like they come from the future. Resync it. A rollback changes nothing because the code never changed, and a restart does not fix the clock.' },
+  lock_contention: { fix: 'cancel_migration', why: 'One migration holds a lock that every query waits on. Cancel it (and run it online later). Scaling out the callers only queues more requests behind the same lock.' },
+  runaway_job: { fix: 'cap_job', why: 'A scheduled job is eating the capacity. Pause it and cap its concurrency. Scaling out chases the load, and a rollback changes nothing because nothing was deployed.' },
   noisy_neighbour: { fix: 'move_node', why: 'CPU is saturated without extra traffic, so another workload on the node is taking it. Move to a different node. Scaling out onto the same node would not help.' },
 };
 
@@ -72,6 +84,9 @@ export const STOPGAP_FOR: Partial<Record<FaultId, { fix: FixId; why: string }>> 
   thread_pool: { fix: 'scale_out', why: 'New replicas help until their threads block on the same slow call.' },
   perf_regression: { fix: 'scale_out', why: 'More replicas hide the slowdown at a higher cost, and the regression is still there.' },
   rate_limited: { fix: 'circuit_breaker', why: 'A breaker stops the 429s, but it also stops the calls the vendor would have allowed.' },
+  gc_pause: { fix: 'restart', why: 'A restart clears the heap, so latency drops for a minute, then the heap fills again and the pauses return.' },
+  lock_contention: { fix: 'scale_out', why: 'More callers do not help: they only queue behind the same lock, though a few get lucky for a moment.' },
+  runaway_job: { fix: 'scale_out', why: 'More replicas absorb some of the job load for a while, but the job still takes everything it is given.' },
   noisy_neighbour: { fix: 'scale_out', why: 'Some new replicas land on quiet nodes, but the noisy node keeps degrading the ones on it.' },
 };
 
