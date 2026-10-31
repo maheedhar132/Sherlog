@@ -8,7 +8,7 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 
 - Builds failed under TypeScript 7 (`TS2882` on the CSS import). Added Vite's client type declarations.
 - Dependabot no longer splits React upgrades into PRs that can't install. React, React DOM and their types are now grouped, and Node's types stay on the Node major we run.
-- The Node engine range is capped below 25, so Vercel won't silently jump to a new Node major.
+- The Node engine range is capped below 27: Vercel keeps the project's Node 26 and won't silently jump to a new Node major.
 
 ## [1.0.0] - 2026-10-31
 
