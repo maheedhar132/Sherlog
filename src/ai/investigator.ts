@@ -40,7 +40,7 @@ function predicted(fx: Fx, key: QueryKey | 'alerts', paging: string[]): Set<stri
     }
     return out;
   }
-  if (key === 'deploys') return new Set([...fx.deploys].map((s) => `dep:${s}`));
+  if (key === 'deploys') return new Set([...[...fx.deploys].map((s) => `dep:${s}`), ...[...fx.configs].map((s) => `cfg:${s}`)]);
   const [channel, service] = key.split(':') as ['metrics' | 'logs' | 'traces', string];
   return fx.services[service][channel];
 }
@@ -79,7 +79,12 @@ export function aiParams(strength: number): AiParams {
   };
 }
 
+/** Below this expected gain (in nats) no remaining dashboard is worth its time cost: commit to the best hypothesis. */
+const MIN_GAIN = 0.02;
+
 export class Investigator {
+  /** Expected information gain of the dashboard chosen last, for the stopping rule. */
+  lastGain = Infinity;
   readonly hyps: Hypothesis[];
   private readonly fxs: Fx[];
   private logp: number[];
@@ -145,9 +150,14 @@ export class Investigator {
 
   chooseQuery(params: AiParams, rng: Rng): QueryKey {
     const keys = this.remaining();
-    if (rng() < params.randomQuery) return keys[Math.floor(rng() * keys.length)];
+    if (rng() < params.randomQuery) {
+      this.lastGain = Infinity;
+      return keys[Math.floor(rng() * keys.length)];
+    }
     const p = this.posterior();
-    const scores = keys.map((k) => Math.max(0, this.infoGain(k, p)) / queryCost(k));
+    const gains = keys.map((k) => Math.max(0, this.infoGain(k, p)));
+    this.lastGain = Math.max(...gains);
+    const scores = gains.map((g, i) => g / queryCost(keys[i]));
     const top = Math.max(...scores, 1e-9);
     const w = scores.map((s) => Math.exp((s / top - 1) / params.temperature));
     let r = rng() * w.reduce((a, b) => a + b, 0);
@@ -204,7 +214,9 @@ export function simulateAi(inc: Incident, strength: number, seed = inc.seed): Ai
 
   for (let step = 0; step < 80; step++) {
     const { hyp, p } = ai.best();
-    if (p >= params.threshold || ai.remaining().length === 0) {
+    const confident = p >= params.threshold || ai.remaining().length === 0;
+    const key = confident ? null : ai.chooseQuery(params, rng);
+    if (key === null || ai.lastGain < MIN_GAIN) {
       wall += think() * 0.5;
       const correct = sameHypothesis(hyp, inc.truth);
       const cost = correct ? 0 : wrongPenalty(++wrongs);
@@ -214,7 +226,6 @@ export function simulateAi(inc: Incident, strength: number, seed = inc.seed): Ai
       if (correct) break;
       continue;
     }
-    const key = ai.chooseQuery(params, rng);
     wall += think();
     const cost = queryCost(key);
     extra += cost;

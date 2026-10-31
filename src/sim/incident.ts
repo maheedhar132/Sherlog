@@ -1,6 +1,6 @@
 import { mulberry32, pick } from '../lib/rng';
 import { COST } from './constants';
-import { addHerrings, faultEffects } from './effects';
+import { addHerrings, dropOneSignal, faultEffects } from './effects';
 import { FAULT_IDS, isCompatible } from './faults';
 import { renderAll } from './render';
 import { generateTopology } from './topology';
@@ -21,7 +21,7 @@ export function hypotheses(t: Topology): Hypothesis[] {
 
 export function generateIncident({ seed, mode, fault }: IncidentOptions): Incident {
   const rng = mulberry32(seed);
-  const topology = generateTopology(rng);
+  const topology = generateTopology(rng, mode);
   const wanted = fault ?? pick(rng, FAULT_IDS);
   let targets = topology.services.filter((s) => isCompatible(topology, s.id, wanted));
   let chosen = wanted;
@@ -33,6 +33,7 @@ export function generateIncident({ seed, mode, fault }: IncidentOptions): Incide
   const truth: Hypothesis = { service: pick(rng, targets).id, fault: chosen };
   const fx = faultEffects(topology, truth);
   const herrings = addHerrings(topology, fx, truth, mode, rng);
+  if (mode === 'hard') dropOneSignal(fx, truth, rng);
   const data = renderAll(rng, topology, fx);
   return { seed, mode, topology, truth, fx, herrings, data };
 }

@@ -14,7 +14,19 @@ export interface Topology {
   callers: Record<string, string[]>;
 }
 
-export type FaultId = 'memory_leak' | 'db_pool' | 'bad_deploy' | 'cache_stampede' | 'retry_storm' | 'dns_failure';
+export type FaultId =
+  | 'memory_leak'
+  | 'db_pool'
+  | 'bad_deploy'
+  | 'cache_stampede'
+  | 'retry_storm'
+  | 'dns_failure'
+  | 'thread_pool'
+  | 'slow_third_party'
+  | 'certificate_expiry'
+  | 'disk_full'
+  | 'poison_message'
+  | 'config_flag';
 
 export type Channel = 'metrics' | 'logs' | 'traces';
 export type QueryKey = `${Channel}:${string}` | 'deploys';
@@ -37,6 +49,8 @@ export interface Fx {
   services: Record<string, ServiceEffects>;
   /** Services that shipped a deploy right around incident onset. */
   deploys: Set<string>;
+  /** Services that had a config or feature-flag change right around incident onset. */
+  configs: Set<string>;
 }
 
 export interface MetricSeries {
@@ -70,6 +84,8 @@ export interface DeployEvent {
   service: string;
   version: string;
   author: string;
+  /** A config or flag flip, as opposed to a code deploy. */
+  kind?: 'deploy' | 'config';
 }
 
 export interface IncidentData {

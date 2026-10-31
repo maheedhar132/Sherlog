@@ -44,6 +44,10 @@ export function detectMetrics(series: MetricSeries[]): Set<string> {
   if (hit && base(hit) - post(hit) > 20) out.add('hit_drop');
   const conns = get('connections');
   if (conns && post(conns) >= 95) out.add('conn_max');
+  const disk = get('disk');
+  if (disk && post(disk) >= 97) out.add('disk_full');
+  const lag = get('consumer');
+  if (lag && post(lag) - base(lag) > 500) out.add('lag_up');
   return out;
 }
 
@@ -57,6 +61,10 @@ const LOG_PATTERNS: [string, RegExp][] = [
   ['log_retry', /retrying call/],
   ['log_overload', /queue full|load shedding/],
   ['log_dns', /ENOTFOUND|no such host/],
+  ['log_tls', /x509|certificate has expired/],
+  ['log_disk', /No space left on device/],
+  ['log_config', /config change applied/],
+  ['log_poison', /failed to process message/],
   ['log_upstream_timeout', /timed out after|deadline exceeded/],
   ['log_upstream_error', /returned 5\d\d|Bad Gateway/],
 ];
@@ -85,7 +93,7 @@ export function detectTrace(root: Span): Set<string> {
 
 /** Deploys within a few minutes of the alert. */
 export function detectDeploys(events: DeployEvent[]): Set<string> {
-  return new Set(events.filter((e) => Math.abs(e.t - ONSET) <= 4).map((e) => `dep:${e.service}`));
+  return new Set(events.filter((e) => Math.abs(e.t - ONSET) <= 4).map((e) => `${e.kind === 'config' ? 'cfg' : 'dep'}:${e.service}`));
 }
 
 /**

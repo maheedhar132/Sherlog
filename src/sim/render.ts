@@ -84,6 +84,27 @@ export function renderMetrics(rng: Rng, s: Service, m: Set<string>): MetricSerie
       values: gen((t) => Math.min(100, (m.has('conn_max') ? connBase + ramp(t) * (100 - connBase) : connBase) + 1.5 * gaussian(rng))),
     });
   }
+  if (s.kind === 'db' || s.kind === 'worker') {
+    const diskBase = between(rng, 38, 62);
+    series.push({
+      name: 'disk used',
+      unit: '%',
+      values: gen((t) => {
+        const fill = Math.max(0, Math.min(1, (t - (ONSET - 18)) / 20));
+        const level = m.has('disk_full') ? diskBase + fill * (100 - diskBase) : diskBase + t * 0.02;
+        return Math.min(100, level + 0.3 * gaussian(rng));
+      }),
+    });
+  }
+  if (s.kind === 'queue') {
+    const lagBase = between(rng, 0, 40);
+    const lagRate = between(rng, 300, 800);
+    series.push({
+      name: 'consumer lag',
+      unit: 'msgs',
+      values: gen((t) => Math.max(0, lagBase * (1 + 0.3 * gaussian(rng)) + (m.has('lag_up') ? Math.max(0, t - ONSET) * lagRate : 0))),
+    });
+  }
   return series;
 }
 
@@ -170,6 +191,14 @@ const FEATURE_LOGS: Record<string, (c: Ctx) => [LogLevel, string]> = {
       ['ERROR', 'rejecting request: worker queue full (1024/1024)'],
       ['WARN', 'load shedding active: returning 503 Service Unavailable'],
     ] as [LogLevel, string][]),
+  log_tls: (c) => ['ERROR', `tls: handshake with ${depWhere(c, (m) => m.has('rps_drop'))} failed: x509: certificate has expired or is not yet valid`],
+  log_disk: ({ rng }) =>
+    pick(rng, [
+      ['ERROR', 'write failed: No space left on device (errno 28)'],
+      ['ERROR', `could not extend file "base/16384/${randInt(rng, 1000, 9999)}": No space left on device`],
+    ] as [LogLevel, string][]),
+  log_config: ({ rng }) => ['WARN', `config change applied: flag "${pick(rng, ['new-pricing', 'fast-checkout', 'v2-search', 'promo-banner'])}" set to on by ${pick(rng, AUTHORS)}`],
+  log_poison: ({ rng }) => ['ERROR', `failed to process message offset=${randInt(rng, 100000, 999999)} (attempt 5/5), will retry: invalid payload`],
   log_dns: (c) => {
     const target = c.s.kind === 'external' ? c.s.id : depWhere(c, (m) => m.has('nodata') || m.has('rps_drop'));
     return pick(c.rng, [
@@ -273,6 +302,7 @@ export function renderTrace(rng: Rng, t: Topology, fx: Fx, s: Service): Span {
   if (tr.has('tr_self_slow')) {
     self += between(rng, 1500, 3500);
     if (s.kind === 'db') attrs['db.plan'] = 'Seq Scan (rows=4.2M)';
+    else if (s.kind === 'external') attrs['net.peer.rtt_ms'] = String(Math.round(self));
     else attrs['runtime.gc_pause_ms'] = String(Math.round(self * 0.8));
   }
   let status: Span['status'] = 'ok';
@@ -297,6 +327,10 @@ export function renderDeploys(rng: Rng, t: Topology, fx: Fx): DeployEvent[] {
     events.push({ t: between(rng, 3, 26), service: s.id, version: version(rng), author: pick(rng, AUTHORS) });
   }
   for (const id of fx.deploys) events.push({ t: ONSET - between(rng, 0.5, 2.5), service: id, version: version(rng), author: pick(rng, AUTHORS) });
+  for (const id of fx.configs) {
+    const flag = pick(rng, ['new-pricing', 'fast-checkout', 'v2-search', 'promo-banner']);
+    events.push({ t: ONSET - between(rng, 0.5, 2.5), service: id, version: `flag ${flag}=on`, author: pick(rng, AUTHORS), kind: 'config' });
+  }
   return events.sort((a, b) => a.t - b.t);
 }
 

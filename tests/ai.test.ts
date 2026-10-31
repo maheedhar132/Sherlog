@@ -96,7 +96,7 @@ describe('what the AI is allowed to know', () => {
       const inc = generateIncident({ seed, mode: 'hard', fault: FAULT_IDS[seed % FAULT_IDS.length] });
       const decoy = hypotheses(inc.topology).find((h) => !sameHypothesis(h, inc.truth))!;
       // Swap the hidden answer and wipe the simulator's own symptom bookkeeping: only the rendered dashboards remain.
-      const tampered = { ...inc, truth: decoy, fx: { services: {}, deploys: new Set<string>() }, herrings: [] };
+      const tampered = { ...inc, truth: decoy, fx: { services: {}, deploys: new Set<string>(), configs: new Set<string>() }, herrings: [] };
       expect(trail(simulateAi(tampered, 0.7)), `seed ${seed}`).toEqual(trail(simulateAi(inc, 0.7)));
     }
   });

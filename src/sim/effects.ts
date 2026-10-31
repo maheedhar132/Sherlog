@@ -5,7 +5,7 @@ import type { Channel, Fx, Hypothesis, Mode, Topology } from './types';
 export function emptyFx(t: Topology): Fx {
   const services: Fx['services'] = {};
   for (const s of t.services) services[s.id] = { metrics: new Set(), logs: new Set(), traces: new Set() };
-  return { services, deploys: new Set() };
+  return { services, deploys: new Set(), configs: new Set() };
 }
 
 export function addFx(fx: Fx, service: string, channel: Channel, ...features: string[]): boolean {
@@ -111,4 +111,19 @@ export function addHerrings(t: Topology, fx: Fx, truth: Hypothesis, mode: Mode, 
   }
   // When no candidate exists a herring is skipped; that just makes this incident a bit easier.
   return notes;
+}
+
+/**
+ * Hard mode: real systems lose telemetry. One signal on the culprit goes missing, so a dashboard looks
+ * healthier than it is and the evidence has to be pieced together from elsewhere.
+ */
+export function dropOneSignal(fx: Fx, truth: Hypothesis, rng: Rng): void {
+  const e = fx.services[truth.service];
+  const pool: [Channel, string][] = [];
+  for (const channel of ['metrics', 'logs', 'traces'] as const) {
+    for (const f of e[channel]) if (!['lat_up', 'err_up', 'nodata', 'mem_climb', 'restarts'].includes(f)) pool.push([channel, f]);
+  }
+  if (pool.length < 3) return;
+  const [channel, feature] = pick(rng, pool);
+  e[channel].delete(feature);
 }

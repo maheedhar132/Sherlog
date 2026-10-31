@@ -160,6 +160,131 @@ export const FAULTS: Record<FaultId, FaultDef> = {
       }
     },
   },
+  thread_pool: {
+    id: 'thread_pool',
+    name: 'Thread pool exhaustion',
+    short: 'Every request thread is blocked, so work queues up',
+    targets: ['app'],
+    story: (s) =>
+      `${s} made a blocking call inside its request threads. Slow responses held every thread, the pool filled up, and new requests queued and timed out, while CPU and memory looked normal.`,
+    signals: [
+      'Latency and errors climb, but CPU and memory stay flat',
+      'It sheds load: "queue full" / "load shedding" in its own logs',
+      'Its own span is slow, with no memory or restart pattern',
+    ],
+    tip: 'High latency with low CPU points at blocked threads, not at load.',
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'lat_up', 'err_up');
+      addFx(fx, s, 'logs', 'log_overload');
+      addFx(fx, s, 'traces', 'tr_self_slow');
+    },
+  },
+
+  slow_third_party: {
+    id: 'slow_third_party',
+    name: 'Slow third-party API',
+    short: 'A vendor API gets slow and drags every caller down',
+    targets: ['external'],
+    story: (s) =>
+      `${s}, a third-party API, started answering in seconds instead of milliseconds. Every service calling it waited on it, so latency rose all the way up the call chain even though nothing in your own systems had changed.`,
+    signals: [
+      "The third-party API's own latency climbs while its error rate stays low",
+      'Callers log upstream timeouts',
+      'Traces show the slow span sitting on the external call',
+    ],
+    tip: 'When the slow span is outside your boundary, the fix is a timeout and a fallback, not a restart.',
+    applies: (t, s) => t.callers[s].length > 0,
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'lat_up');
+      addFx(fx, s, 'traces', 'tr_self_slow');
+    },
+  },
+
+  certificate_expiry: {
+    id: 'certificate_expiry',
+    name: 'Certificate expiry',
+    short: 'An expired TLS certificate makes every connection fail instantly',
+    targets: ['external', 'app'],
+    story: (s) =>
+      `The TLS certificate for ${s} expired. Callers' handshakes failed immediately, so errors shot up while latency stayed normal and no traffic reached ${s}.`,
+    signals: [
+      'Callers fail instantly: errors up, latency flat',
+      'x509 / "certificate has expired" in the callers\' logs',
+      'Traffic to the target drops to about zero',
+    ],
+    tip: 'Instant failures plus an x509 error is a certificate, not the network. DNS failures look the same until you read the log line.',
+    applies: (t, s) => t.callers[s].length > 0,
+    effects: (t, s, fx) => {
+      addFx(fx, s, 'metrics', 'rps_drop');
+      for (const c of t.callers[s]) {
+        addFx(fx, c, 'metrics', 'err_up');
+        addFx(fx, c, 'logs', 'log_tls');
+        addFx(fx, c, 'traces', 'tr_dep_fastfail');
+      }
+    },
+  },
+
+  disk_full: {
+    id: 'disk_full',
+    name: 'Disk full',
+    short: 'The disk fills up and every write fails',
+    targets: ['db', 'worker'],
+    story: (s) =>
+      `The data volume on ${s} filled up because logs and temp files were never rotated. Writes started failing with "no space left on device", so everything depending on it began to error.`,
+    signals: [
+      'Disk usage pinned at 100%',
+      '"No space left on device" in its own logs',
+      'Errors on it and on its callers, with CPU and memory looking normal',
+    ],
+    tip: 'Saturation is not only CPU and memory: disks, connections and queues fill up too.',
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'disk_full', 'err_up');
+      addFx(fx, s, 'logs', 'log_disk');
+      addFx(fx, s, 'traces', 'tr_self_err');
+    },
+  },
+
+  poison_message: {
+    id: 'poison_message',
+    name: 'Stuck consumer (poison message)',
+    short: 'One bad message crash-loops the consumer and the queue backs up',
+    targets: ['worker'],
+    story: (s) =>
+      `A malformed message made ${s} fail every time it retried. The consumer stopped making progress and the queue backed up. Nothing user-facing paged, because the work is asynchronous.`,
+    signals: [
+      "The queue's consumer lag climbs steadily",
+      "The worker stops processing: its request rate drops to about zero",
+      '"Failed to process message" repeated in the worker\'s logs, with little or no customer-facing alert',
+    ],
+    tip: "Asynchronous failures often page nobody. Look at queue depth and consumer lag, not only at user-facing latency.",
+    effects: (t, s, fx) => {
+      addFx(fx, s, 'metrics', 'rps_drop');
+      addFx(fx, s, 'logs', 'log_poison', 'log_exception');
+      addFx(fx, s, 'traces', 'tr_self_err');
+      for (const d of t.byId[s].deps) if (t.byId[d].kind === 'queue') addFx(fx, d, 'metrics', 'lag_up');
+    },
+  },
+
+  config_flag: {
+    id: 'config_flag',
+    name: 'Bad config or feature flag',
+    short: 'A flag flip breaks a hot code path with no deploy at all',
+    targets: ['app'],
+    story: (s) =>
+      `A feature flag for ${s} was switched on without a deploy. It enabled a code path that throws, so errors began the minute the flag flipped while the deploy log stayed quiet.`,
+    signals: [
+      'Errors jump but latency stays normal',
+      'A "config change applied" line in its logs, and a flag flip in the change log',
+      'Stack traces in its logs; its own span errors',
+    ],
+    tip: 'No deploy does not mean no change: check config and flag history before assuming the code is the same.',
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'err_up');
+      addFx(fx, s, 'logs', 'log_exception', 'log_config');
+      addFx(fx, s, 'traces', 'tr_self_err');
+      fx.configs.add(s);
+    },
+  },
 };
 
 export const FAULT_IDS = Object.keys(FAULTS) as FaultId[];

@@ -1,5 +1,5 @@
 import { chance, pick, randInt, shuffle, type Rng } from '../lib/rng';
-import type { Service, ServiceKind, Topology } from './types';
+import type { Mode, Service, ServiceKind, Topology } from './types';
 
 const APPS = ['checkout', 'orders', 'catalog', 'search', 'users', 'auth', 'cart', 'pricing', 'inventory', 'reviews', 'billing', 'shipping'];
 const DBS = ['postgres-main', 'postgres-users', 'postgres-orders'];
@@ -19,7 +19,7 @@ export function buildTopology(services: Service[]): Topology {
 }
 
 /** Random but always well-formed service graph: every fault type has at least one valid target. */
-export function generateTopology(rng: Rng): Topology {
+export function generateTopology(rng: Rng, mode: Mode = 'normal'): Topology {
   const services: Service[] = [];
   const add = (id: string, kind: ServiceKind): Service => {
     const s: Service = { id, kind, deps: [] };
@@ -33,8 +33,10 @@ export function generateTopology(rng: Rng): Topology {
   };
 
   const gateway = add('edge-gateway', 'gateway');
+  // Easy systems are small, Hard ones are bigger.
+  const appCount = mode === 'easy' ? 3 : mode === 'hard' ? randInt(rng, 4, 5) : randInt(rng, 3, 5);
   const apps = shuffle(rng, APPS)
-    .slice(0, randInt(rng, 3, 5))
+    .slice(0, appCount)
     .map((n) => add(n, 'app'));
   const dbs = shuffle(rng, DBS)
     .slice(0, randInt(rng, 1, 2))
@@ -58,7 +60,8 @@ export function generateTopology(rng: Rng): Topology {
 
   link(pick(rng, apps), external);
 
-  if (chance(rng, 0.6)) {
+  // Every system has an async pipeline, which is where silent failures live.
+  {
     const queue = add('events-queue', 'queue');
     link(pick(rng, apps), queue);
     const worker = add(pick(rng, WORKERS), 'worker');

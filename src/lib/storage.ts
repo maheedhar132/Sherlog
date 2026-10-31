@@ -13,6 +13,7 @@ function hydrate(p: Profile): Profile {
   return {
     ...newProfile(),
     ...p,
+    faults: { ...newProfile().faults, ...p.faults },
     streak: { current, best: Math.max(count(s?.best), current), last },
     dailyStats: { played: count(d?.played), solved: count(d?.solved), won: count(d?.won) },
   };
