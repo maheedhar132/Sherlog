@@ -1141,3 +1141,191 @@ h3 {
     max-height: 200px;
   }
 }
+
+/* ---------------------------------------------------------------- race track and budget */
+
+.race-bar .race-track {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 4px;
+  padding-top: 6px;
+}
+.race-track .stops {
+  position: relative;
+  height: 14px;
+  font: 10.5px var(--mono);
+  color: var(--muted);
+}
+.race-track .stops span {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.race-track .stops span:last-child {
+  transform: translateX(-100%);
+}
+.race-track .lane {
+  position: relative;
+  height: 16px;
+  background: var(--panel-2);
+  border-radius: 8px;
+}
+.race-track .lane .fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.7s ease;
+}
+.race-track .lane.you .fill {
+  background: rgba(76, 194, 255, 0.35);
+}
+.race-track .lane.ai .fill {
+  background: rgba(180, 140, 255, 0.35);
+}
+.race-track .lane b {
+  position: absolute;
+  top: 0;
+  transform: translateX(-100%);
+  padding: 0 7px;
+  font: 700 10px/16px var(--mono);
+  border-radius: 8px;
+  transition: left 0.7s ease;
+}
+.race-track .lane.you b {
+  background: var(--accent);
+  color: #04121c;
+}
+.race-track .lane.ai b {
+  background: var(--violet);
+  color: #140a2a;
+}
+.budget {
+  position: relative;
+  height: 16px;
+  background: var(--panel-2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.budget div {
+  height: 100%;
+  background: rgba(61, 220, 151, 0.4);
+  transition: width 0.4s linear;
+}
+.budget div.warm {
+  background: rgba(255, 184, 77, 0.45);
+}
+.budget div.hot {
+  background: rgba(255, 93, 108, 0.55);
+}
+.budget span {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  font: 10.5px/16px var(--mono);
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------- chart SLO line and markers */
+
+.metric .slo {
+  stroke: var(--warn);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+.metric .marker {
+  fill: var(--violet);
+}
+.metric .slolabel {
+  position: absolute;
+  left: 4px;
+  transform: translateY(-100%);
+  font: 9.5px var(--mono);
+  color: var(--warn);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- inspector, phone chips */
+
+.run-now {
+  padding: 5px 12px;
+}
+.query-cta {
+  min-height: 200px;
+}
+.service-chips {
+  display: none;
+}
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0 6px 6px 0;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.chip small {
+  color: var(--muted);
+  font: 10.5px var(--mono);
+}
+.chip.alerting {
+  border-color: var(--bad);
+}
+.chip.selected {
+  border-color: var(--accent);
+  background: #13283a;
+}
+.chip .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bad);
+  align-self: center;
+}
+@media (max-width: 600px) {
+  .map-strip .service-map {
+    display: none;
+  }
+  .service-chips {
+    display: block;
+  }
+  .race-track .stops {
+    font-size: 9px;
+  }
+}
+
+/* ---------------------------------------------------------------- compact header */
+
+.race-bar {
+  padding: 8px 14px;
+}
+.race-bar .race-track {
+  gap: 3px;
+  padding-top: 2px;
+}
+.race-track .stops {
+  height: 12px;
+  font-size: 10px;
+}
+.race-track .lane {
+  height: 12px;
+  border-radius: 6px;
+}
+.race-track .lane .fill {
+  border-radius: 6px;
+}
+.race-track .lane b {
+  font: 700 9px/12px var(--mono);
+}
+.budget {
+  height: 13px;
+  border-radius: 7px;
+}
+.budget span {
+  font: 10px/13px var(--mono);
+}
+.page-lines {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 16px;
+}

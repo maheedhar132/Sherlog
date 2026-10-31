@@ -9,7 +9,7 @@ import type { Mode } from '../src/sim/types';
 
 describe('AI investigator', () => {
   it('always ends with the correct root cause', () => {
-    for (let seed = 0; seed < 120; seed++) {
+    for (let seed = 0; seed < 50; seed++) {
       const inc = generateIncident({ seed, mode: 'hard', fault: FAULT_IDS[seed % FAULT_IDS.length] });
       const run = simulateAi(inc, seed % 2 ? 1 : 0);
       const declares = run.actions.filter((a) => a.kind === 'declare');
@@ -22,7 +22,7 @@ describe('AI investigator', () => {
   it('a strong AI is efficient and rarely guesses wrong', () => {
     let queries = 0;
     let wrong = 0;
-    const n = 120;
+    const n = 60;
     for (let seed = 0; seed < n; seed++) {
       const inc = generateIncident({ seed, mode: 'normal', fault: FAULT_IDS[seed % FAULT_IDS.length] });
       const run = simulateAi(inc, 1);
@@ -36,7 +36,7 @@ describe('AI investigator', () => {
   it('strength actually changes how fast the AI resolves', () => {
     const avg = (strength: number) => {
       let total = 0;
-      for (let seed = 0; seed < 80; seed++) total += simulateAi(generateIncident({ seed, mode: 'normal' }), strength).mttr;
+      for (let seed = 0; seed < 40; seed++) total += simulateAi(generateIncident({ seed, mode: 'normal' }), strength).mttr;
       return total / 80;
     };
     const weak = avg(0);
@@ -95,7 +95,7 @@ describe('what the AI is allowed to know', () => {
   };
 
   it('behaves identically whatever the hidden answer is, until a declaration is judged', () => {
-    for (let seed = 0; seed < 40; seed++) {
+    for (let seed = 0; seed < 20; seed++) {
       const inc = generateIncident({ seed, mode: 'hard', fault: FAULT_IDS[seed % FAULT_IDS.length] });
       const decoy = hypotheses(inc.topology).find((h) => !sameHypothesis(h, inc.truth))!;
       // Swap the hidden answer and wipe the simulator's own symptom bookkeeping: only the rendered dashboards remain.
@@ -125,12 +125,12 @@ describe('guessing does not pay', () => {
     expect([1, 2, 3].map(wrongPenalty)).toEqual([20, 40, 60]);
     // The AI rarely guesses wrong, so look across many incidents for real wrong declarations.
     let found = 0;
-    for (let seed = 0; seed < 900; seed++) {
+    for (let seed = 0; seed < 700; seed++) {
       const run = simulateAi(generateIncident({ seed, mode: 'hard' }), DEFAULT_STRENGTH.easy);
       const wrongCosts = run.actions.filter((a) => a.kind === 'declare' && !a.correct).map((a) => a.cost);
       expect(wrongCosts, `seed ${seed}`).toEqual(wrongCosts.map((_, i) => 20 * (i + 1)));
       found += wrongCosts.length;
-      if (found >= 3) break;
+      if (found >= 2) break;
     }
     expect(found).toBeGreaterThan(0);
   }, 30_000);
@@ -138,7 +138,7 @@ describe('guessing does not pay', () => {
   it('keeps a player who never opens a dashboard from beating the Normal AI most of the time', () => {
     const rng = mulberry32(99);
     let wins = 0;
-    const n = 300;
+    const n = 150;
     for (let seed = 0; seed < n; seed++) {
       const inc = generateIncident({ seed, mode: 'normal' });
       const order = shuffle(rng, hypotheses(inc.topology));

@@ -21,6 +21,8 @@ export const FEATURE_TIPS: Record<string, string> = {
   log_retry: 'Aggressive retries: this service multiplies traffic when things slow down.',
   log_overload: 'Load shedding or a full queue: something is saturated.',
   log_dns: 'Name resolution failures: DNS.',
+  log_zone: 'Only some instances in one zone are failing: a partial failure, not an outage of the whole service.',
+  log_ratelimit: '429s: the other side is healthy but is limiting you.',
   log_tls: 'TLS or x509 errors: an expired or invalid certificate.',
   log_disk: '"No space left on device": the disk is full.',
   log_config: 'A config or flag change was applied. Compare its time with the alert.',

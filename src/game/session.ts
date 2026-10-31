@@ -3,7 +3,8 @@ import { simulateAi, type AiRun } from '../ai/investigator';
 import { hashString } from '../lib/rng';
 import { generateIncident } from '../sim/incident';
 import type { FixId } from '../sim/fixes';
-import type { Hypothesis, Incident, Mode, QueryKey } from '../sim/types';
+import { FAULT_IDS } from '../sim/faults';
+import type { FaultId, Hypothesis, Incident, Mode, QueryKey } from '../sim/types';
 
 export interface MatchSetup {
   incident: Incident;
@@ -12,6 +13,8 @@ export interface MatchSetup {
   daily: { date: string; number: number } | null;
   /** The guided first incident: unranked, with the coach on. */
   tutorial?: boolean;
+  /** Set when the scenario picker forced the fault, which a shared link must repeat to rebuild the same incident. */
+  forced?: FaultId;
 }
 
 export interface PlayerAction {
@@ -48,7 +51,25 @@ export function createMatch(profile: Profile, mode: Mode): MatchSetup {
   const seed = Math.floor(Math.random() * 2 ** 31);
   const fault = profile.played < 1 ? undefined : pickFault(profile, Math.random);
   const incident = generateIncident({ seed, mode, fault });
-  return { incident, ai: simulateAi(incident, profile.strength[mode]), mode, daily: null };
+  return { incident, ai: simulateAi(incident, profile.strength[mode]), mode, daily: null, forced: fault };
+}
+
+/** Rebuild a specific incident from a shared link, racing the AI at the player's own level. */
+export function createFromSeed(seed: number, mode: Mode, profile: Profile, forced?: FaultId): MatchSetup {
+  const incident = generateIncident({ seed, mode, fault: forced });
+  return { incident, ai: simulateAi(incident, profile.strength[mode]), mode, daily: null, forced };
+}
+
+/** Parse `#seed=123&mode=normal&fault=disk_full`; null when it is not a valid incident link. */
+export function parseIncidentHash(hash: string): { seed: number; mode: Mode; fault?: FaultId } | null {
+  const q = new URLSearchParams(hash.replace(/^#/, ''));
+  const seed = Number(q.get('seed'));
+  const mode = q.get('mode');
+  const fault = q.get('fault');
+  if (!Number.isInteger(seed) || seed < 0 || seed > 2 ** 31) return null;
+  if (mode !== 'easy' && mode !== 'normal' && mode !== 'hard') return null;
+  if (fault && !(FAULT_IDS as string[]).includes(fault)) return null;
+  return { seed, mode, fault: (fault as FaultId) || undefined };
 }
 
 /** Same incident and same AI for everyone on a given day. */
@@ -58,7 +79,7 @@ export function createDaily(date = todayKey()): MatchSetup {
 }
 
 /** The guided first incident: a database saturation where only its callers page. */
-export const TUTORIAL_SEED = 32;
+export const TUTORIAL_SEED = 110;
 export function createTutorial(): MatchSetup {
   const incident = generateIncident({ seed: TUTORIAL_SEED, mode: 'easy' });
   return { incident, ai: simulateAi(incident, 0.1), mode: 'easy', daily: null, tutorial: true };
@@ -84,5 +105,7 @@ export function shareText(setup: MatchSetup, result: MatchResult, url: string, s
   const title = setup.daily ? `Sherlog · Daily #${setup.daily.number}${fire}` : `Sherlog · ${setup.mode}`;
   const you = result.playerMttr === null ? 'unsolved' : fmt(result.playerMttr);
   const verdict = result.won ? 'beat the AI 🏆' : 'lost to the AI 🤖';
-  return `${title}\nMTTR ${you} vs AI ${fmt(result.aiMttr)}: ${verdict}\n${trail || '⬛'}\n${url}`;
+  // A shared result links to the exact incident, so a friend can try to beat it.
+  const link = setup.daily || setup.tutorial ? url : `${url}#seed=${setup.incident.seed}&mode=${setup.mode}${setup.forced ? `&fault=${setup.forced}` : ''}`;
+  return `${title}\nMTTR ${you} vs AI ${fmt(result.aiMttr)}: ${verdict}\n${trail || '⬛'}\n${link}`;
 }

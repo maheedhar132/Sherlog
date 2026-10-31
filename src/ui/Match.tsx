@@ -12,13 +12,15 @@ import type { FaultId, QueryKey, ServiceKind } from '../sim/types';
 import { CHANNEL_ICON, KIND_LABEL, describeQuery } from './labels';
 import { Modal } from './Modal';
 import { DeploysPanel, LogsPanel, MetricsPanel, TracePanel } from './Panels';
-import { ServiceMap } from './ServiceMap';
+import { ServiceChips, ServiceMap } from './ServiceMap';
 import { FEATURE_TIPS } from './tips';
 
 type Tab = 'metrics' | 'logs' | 'traces' | 'deploys';
 
 const TAB_KEYS: Record<string, Tab> = { m: 'metrics', l: 'logs', t: 'traces', d: 'deploys' };
 const HINT_COST = 15;
+/** The SLO error budget is a 10 minute outage's worth: your clock burns it. */
+const ERROR_BUDGET_SECONDS = 600;
 const KIND_WORD: Record<ServiceKind, string> = {
   gateway: 'the gateway',
   app: 'an application service',
@@ -74,8 +76,8 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   const options = useMemo(() => fixOptions(incident.seed, truth.fault), [incident, truth.fault]);
 
   useEffect(() => {
-    if (phase === 'running' && !mitigating && aiNow.finished && clock > ai.mttr) setPhase('lost');
-  }, [phase, mitigating, aiNow.finished, clock, ai.mttr]);
+    if (phase === 'running' && !mitigating && !setup.tutorial && aiNow.finished && clock > ai.mttr) setPhase('lost');
+  }, [phase, mitigating, setup.tutorial, aiNow.finished, clock, ai.mttr]);
 
   useEffect(() => {
     if (!toast) return;
@@ -197,6 +199,21 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   const aiFeed = [...aiNow.visible].reverse();
   const aiConfidence = aiNow.visible.length ? aiNow.visible[aiNow.visible.length - 1].confidence : 0;
   const masked = (s: string) => '▒'.repeat(Math.min(12, s.length));
+
+  // The race: where each side is between "paged" and "mitigated".
+  const aiQueries = aiNow.visible.filter((a) => a.kind === 'query').length;
+  const aiProgress = aiNow.visible.some((a) => a.kind === 'fix')
+    ? 1
+    : aiNow.visible.some((a) => a.kind === 'declare' && a.correct)
+      ? 0.75
+      : aiQueries
+        ? 0.25 + Math.min(0.4, aiQueries * 0.06)
+        : 0.1;
+  const youProgress = mitigating ? 0.75 : queried.size ? 0.25 + Math.min(0.4, queried.size * 0.06) : 0.1;
+  const budgetUsed = Math.min(1, clock / ERROR_BUDGET_SECONDS);
+  const markers = incident.data.deploys
+    .filter((e) => e.service === selected)
+    .map((e) => ({ t: e.t, label: `${e.kind === 'config' ? 'Config change' : 'Deploy'}: ${e.version} by ${e.author}` }));
   const toggleCoach = () =>
     setCoachOn((on) => {
       saveCoachPref(!on);
@@ -213,22 +230,44 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
         </div>
         <div className="incident-title">
           <div className="inc-id">
-            {setup.tutorial ? 'TRAINING' : setup.daily ? `DAILY #${setup.daily.number}` : `INC-${String(incident.seed).slice(-5)}`} · {setup.mode.toUpperCase()}
+            {setup.tutorial ? 'TRAINING' : setup.daily ? `DAILY #${setup.daily.number}` : `INC-${incident.seed}`} · {setup.mode.toUpperCase()}
           </div>
           <div className="paging">
             🔔 PAGED 14:02 · {pageLines.length ? `${pageLines.length} alerting` : 'customers report problems, no alert fired'}
           </div>
           <ul className="page-lines">
-            {pageLines.slice(0, 3).map((p) => (
+            {pageLines.slice(0, 2).map((p) => (
               <li key={p.service}>{p.text}</li>
             ))}
-            {pageLines.length > 3 && <li>+{pageLines.length - 3} more</li>}
+            {pageLines.length > 2 && <li>+{pageLines.length - 2} more</li>}
           </ul>
         </div>
         <div className={`clock ai ${aiNow.finished ? 'done' : ''}`}>
           <span>AI</span>
           <b>{fmt(aiNow.clock)}</b>
           <small>{aiNow.finished ? 'resolved ✓' : `confidence ${Math.round(aiConfidence * 100)}%`}</small>
+        </div>
+        <div className="race-track" role="img" aria-label={`Race: you are ${Math.round(youProgress * 100)}% of the way, the AI ${Math.round(aiProgress * 100)}%`}>
+          <div className="stops" aria-hidden="true">
+            <span style={{ left: '10%' }}>Paged</span>
+            <span style={{ left: '40%' }}>Investigating</span>
+            <span style={{ left: '75%' }}>Diagnosed</span>
+            <span style={{ left: '100%' }}>Mitigated</span>
+          </div>
+          <div className="lane you">
+            <div className="fill" style={{ width: `${youProgress * 100}%` }} />
+            <b style={{ left: `${youProgress * 100}%` }}>YOU</b>
+          </div>
+          <div className="lane ai">
+            <div className="fill" style={{ width: `${aiProgress * 100}%` }} />
+            <b style={{ left: `${aiProgress * 100}%` }}>AI</b>
+          </div>
+          <div className="budget" title="The SLO error budget burns for as long as the incident runs">
+            <div className={budgetUsed > 0.8 ? 'hot' : budgetUsed > 0.5 ? 'warm' : ''} style={{ width: `${budgetUsed * 100}%` }} />
+            <span>
+              SLO error budget: {Math.round(budgetUsed * 100)}% burned{budgetUsed >= 1 ? ' (exhausted)' : ''}
+            </span>
+          </div>
         </div>
       </header>
 
@@ -241,6 +280,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
           </button>
         </div>
         <ServiceMap topology={t} alerts={alerts} selected={selected} queried={queried} onSelect={select} />
+        <ServiceChips topology={t} alerts={alerts} selected={selected} queried={queried} onSelect={select} />
       </section>
 
       <div className="match-grid">
@@ -340,6 +380,11 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
                 </button>
               ))}
             </nav>
+            {!queried.has(currentKey) && (
+              <button className="primary run-now" onClick={() => runQuery(currentKey)}>
+                Run · +{COST[tab]}s
+              </button>
+            )}
           </div>
           {!queried.has(currentKey) ? (
             <div className="query-cta">
@@ -352,7 +397,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
               </button>
             </div>
           ) : tab === 'metrics' ? (
-            <MetricsPanel series={incident.data.metrics[selected]} />
+            <MetricsPanel series={incident.data.metrics[selected]} markers={markers} />
           ) : tab === 'logs' ? (
             <LogsPanel lines={incident.data.logs[selected]} />
           ) : tab === 'traces' ? (

@@ -26,7 +26,12 @@ export type FaultId =
   | 'certificate_expiry'
   | 'disk_full'
   | 'poison_message'
-  | 'config_flag';
+  | 'config_flag'
+  | 'partial_zone'
+  | 'traffic_spike'
+  | 'perf_regression'
+  | 'rate_limited'
+  | 'noisy_neighbour';
 
 export type Channel = 'metrics' | 'logs' | 'traces';
 export type QueryKey = `${Channel}:${string}` | 'deploys';

@@ -191,6 +191,11 @@ const FEATURE_LOGS: Record<string, (c: Ctx) => [LogLevel, string]> = {
       ['ERROR', 'rejecting request: worker queue full (1024/1024)'],
       ['WARN', 'load shedding active: returning 503 Service Unavailable'],
     ] as [LogLevel, string][]),
+  log_zone: ({ rng }) => ['WARN', `health check failed for ${randInt(rng, 2, 4)} of 6 instances in zone ${pick(rng, ['us-east-1b', 'us-east-1c', 'eu-west-1a'])}, removing from rotation`],
+  log_ratelimit: (c) => {
+    const target = c.s.deps.find((d) => c.t.byId[d].kind === 'external') ?? c.s.deps[0];
+    return ['WARN', `429 Too Many Requests from ${target} (retry-after 30s)`];
+  },
   log_tls: (c) => ['ERROR', `tls: handshake with ${depWhere(c, (m) => m.has('rps_drop'))} failed: x509: certificate has expired or is not yet valid`],
   log_disk: ({ rng }) =>
     pick(rng, [

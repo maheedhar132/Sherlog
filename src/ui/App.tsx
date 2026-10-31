@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { newProfile, recordMatch, type Profile } from '../ai/adapter';
-import { createDaily, createMatch, createTutorial, shareText, type MatchResult, type MatchSetup } from '../game/session';
+import { createDaily, createFromSeed, createMatch, createTutorial, parseIncidentHash, shareText, type MatchResult, type MatchSetup } from '../game/session';
 import { recordDaily } from '../game/streak';
 import { exportProfile, importProfile, loadProfile, saveProfile } from '../lib/storage';
 import type { Mode } from '../sim/types';
@@ -16,11 +16,23 @@ type Screen =
 
 export function App() {
   const [profile, setProfile] = useState<Profile>(loadProfile);
-  const [screen, setScreen] = useState<Screen>({ name: 'home' });
+  const [screen, setScreen] = useState<Screen>(() => {
+    const link = parseIncidentHash(location.hash);
+    return link ? { name: 'match', setup: createFromSeed(link.seed, link.mode, loadProfile(), link.fault) } : { name: 'home' };
+  });
   const [guide, setGuide] = useState(false);
 
   useEffect(() => {
     saveProfile(profile);
+  }, [profile]);
+  // Pasting a shared incident link into an open tab starts that incident.
+  useEffect(() => {
+    const onHash = () => {
+      const link = parseIncidentHash(location.hash);
+      if (link) setScreen({ name: 'match', setup: createFromSeed(link.seed, link.mode, profile, link.fault) });
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
   }, [profile]);
   useEffect(() => {
     window.scrollTo(0, 0);

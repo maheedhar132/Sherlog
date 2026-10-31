@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { newProfile } from '../src/ai/adapter';
-import { TUTORIAL_SEED, createTutorial } from '../src/game/session';
+import { TUTORIAL_SEED, createFromSeed, createMatch, createTutorial, parseIncidentHash, shareText } from '../src/game/session';
 import { importProfile } from '../src/lib/storage';
 import { detectAlerts } from '../src/sim/detect';
 import { FAULT_IDS } from '../src/sim/faults';
@@ -9,13 +9,12 @@ import { generateIncident } from '../src/sim/incident';
 import { pages } from '../src/sim/slo';
 
 describe('mitigation', () => {
-  it('has a distinct, explained fix for every fault', () => {
+  it('has an explained fix for every fault', () => {
     for (const f of FAULT_IDS) {
       expect(FIX_FOR[f], f).toBeDefined();
       expect(FIXES[FIX_FOR[f].fix]).toBeTruthy();
       expect(FIX_FOR[f].why.length).toBeGreaterThan(40);
     }
-    expect(new Set(FAULT_IDS.map((f) => FIX_FOR[f].fix)).size).toBe(FAULT_IDS.length);
   });
 
   it('offers four unique options with exactly one correct, stable for an incident', () => {
@@ -56,6 +55,31 @@ describe('pages', () => {
     for (let seed = 1; seed <= 20; seed++) {
       const inc = generateIncident({ seed, mode: 'normal' });
       for (const p of pages(inc, detectAlerts(inc))) expect(p.text.startsWith(p.service)).toBe(true);
+    }
+  });
+});
+
+describe('shared incident links', () => {
+  it('parses valid links and rejects bad ones', () => {
+    expect(parseIncidentHash('#seed=229&mode=normal')).toEqual({ seed: 229, mode: 'normal', fault: undefined });
+    expect(parseIncidentHash('#seed=5&mode=hard&fault=disk_full')).toEqual({ seed: 5, mode: 'hard', fault: 'disk_full' });
+    for (const bad of ['', '#seed=abc&mode=normal', '#seed=1&mode=insane', '#seed=-4&mode=easy', '#seed=1&mode=easy&fault=nope']) {
+      expect(parseIncidentHash(bad), bad).toBeNull();
+    }
+  });
+
+  it('rebuilds the exact incident a result was shared from, including a forced fault', () => {
+    const profile = newProfile();
+    profile.played = 5; // past the first game, so the scenario picker forces a fault
+    for (let i = 0; i < 10; i++) {
+      const match = createMatch(profile, 'normal');
+      const shared = shareText(match, { won: true, playerMttr: 60, aiMttr: 90, actions: [] }, 'https://example.test/');
+      const link = shared.split('\n').pop()!;
+      const parsed = parseIncidentHash(link.slice(link.indexOf('#')));
+      expect(parsed).not.toBeNull();
+      const again = createFromSeed(parsed!.seed, parsed!.mode, profile, parsed!.fault);
+      expect(again.incident.truth).toEqual(match.incident.truth);
+      expect(again.incident.topology.services.map((x) => x.id)).toEqual(match.incident.topology.services.map((x) => x.id));
     }
   });
 });

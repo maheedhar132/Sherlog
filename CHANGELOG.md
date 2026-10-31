@@ -6,11 +6,14 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 
 ### Added
 
-- **Six new fault types** (12 in all): thread pool exhaustion, slow third-party API, certificate expiry, disk full, stuck queue consumer (a poison message) and a bad config or feature flag. They add disk and consumer-lag metrics, TLS, disk, config and poison-message log signals, and config flips in the change log. Some of them page nobody.
+- **Eleven new fault types** (17 in all): thread pool exhaustion, slow third-party API, certificate expiry, disk full, stuck queue consumer (a poison message), a bad config or feature flag, a partial zone failure, a legitimate traffic spike (where scaling out is the right fix), a performance regression, a vendor rate limit and a noisy neighbour. They add disk and consumer-lag metrics, TLS, disk, config, zone and rate-limit log signals, and config flips in the change log. Some of them page nobody.
 - **A mitigation step.** After the diagnosis, choose the fix that stops the bleeding. A wrong fix costs time, the AI applies the fix too, and the postmortem explains the right one.
 - **Guided 2-minute training**, an optional **coach** that explains what each signal usually means (it reads only what you have opened), and **hints** that cost 15 s.
 - Pages now show SLO and error-budget numbers. Charts show values on hover with a shared crosshair and time axes, logs highlight the filter, and keyboard shortcuts switch dashboards.
 - The postmortem charts how sure the AI was of the right answer after each step.
+- A live **race track** (paged, investigating, diagnosed, mitigated) for you and the AI, and an **SLO error budget** that burns while the incident runs.
+- **Share links:** a shared result links to the exact incident (`#seed=...&mode=...`), so a friend can try to beat it.
+- Charts show the SLO as a line and mark deploys and config changes; a Run button is always visible; on phones the map becomes a list of tappable services.
 
 ### Changed
 

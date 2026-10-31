@@ -7,14 +7,30 @@ import type { DeployEvent, LogLine, MetricSeries, Span } from '../sim/types';
 const clock = (i: number) => clockLabel(i).slice(0, 5);
 const fmtV = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v >= 100 ? Math.round(v).toString() : v.toFixed(v >= 10 ? 1 : 2));
 
+/** A deploy or config change, drawn on every chart at the minute it landed. */
+export interface ChartMarker {
+  t: number;
+  label: string;
+}
+
+/** SLO lines: p99 within 1.5x of normal, and at most 1% errors. */
+function sloFor(s: MetricSeries): number | undefined {
+  const v = s.values.filter((x): x is number => x !== null);
+  if (s.name.startsWith('latency')) return (v.slice(0, 18).reduce((a, b) => a + b, 0) / Math.max(1, Math.min(18, v.length))) * 1.5;
+  if (s.name.startsWith('error')) return 1;
+  return undefined;
+}
+
 interface ChartProps {
   series: MetricSeries;
+  slo?: number;
+  markers: ChartMarker[];
   /** Minute under the pointer, shared by every chart in the panel. */
   hover: number | null;
   onHover: (i: number | null) => void;
 }
 
-function MetricChart({ series, hover, onHover }: ChartProps) {
+function MetricChart({ series, slo, markers, hover, onHover }: ChartProps) {
   const w = 300;
   const h = 92;
   const padL = 4;
@@ -57,6 +73,13 @@ function MetricChart({ series, hover, onHover }: ChartProps) {
         <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" onPointerMove={move} onPointerLeave={() => onHover(null)}>
           {firstNull >= 0 && <rect className="nodata" x={x(firstNull)} y={0} width={w - x(firstNull)} height={h} />}
           <line className="onset" x1={x(ONSET)} x2={x(ONSET)} y1={0} y2={h} />
+          {slo !== undefined && slo < max && <line className="slo" x1={padL} x2={w - padL} y1={y(slo)} y2={y(slo)} />}
+          {markers.map((m, i) => (
+            <g key={i}>
+              <path className="marker" d={`M${x(m.t)},${h - 1} l-3.5,-6 l7,0 z`} />
+              <title>{m.label}</title>
+            </g>
+          ))}
           {segments.map((d, i) => (
             <path key={i} d={d} className="line" />
           ))}
@@ -64,6 +87,11 @@ function MetricChart({ series, hover, onHover }: ChartProps) {
           {hover !== null && at !== null && at !== undefined && <circle className="point" cx={x(hover)} cy={y(at)} r={3} />}
         </svg>
         <span className="ymax">{fmtV(max / 1.15)}</span>
+        {slo !== undefined && slo < max && (
+          <span className="slolabel" style={{ top: `${(y(slo) / h) * 100}%` }}>
+            SLO
+          </span>
+        )}
       </div>
       <div className="xticks" aria-hidden="true">
         {[0, 15, 30, 45, 59].map((m) => (
@@ -74,15 +102,16 @@ function MetricChart({ series, hover, onHover }: ChartProps) {
   );
 }
 
-export function MetricsPanel({ series }: { series: MetricSeries[] }) {
+export function MetricsPanel({ series, markers = [] }: { series: MetricSeries[]; markers?: ChartMarker[] }) {
   const [hover, setHover] = useState<number | null>(null);
   return (
     <div className="metrics-grid">
       {series.map((s) => (
-        <MetricChart key={s.name} series={s} hover={hover} onHover={setHover} />
+        <MetricChart key={s.name} series={s} slo={sloFor(s)} markers={markers} hover={hover} onHover={setHover} />
       ))}
       <p className="hint">
-        Last 60 minutes · hover a chart to read every metric at that minute · dashed line = alert fired at {clockLabel(ONSET)}
+        Last 60 minutes · hover a chart to read every metric at that minute · red dashes = alert fired at {clockLabel(ONSET)} · amber dashes = SLO ·
+        ▲ = a deploy or config change
       </p>
     </div>
   );

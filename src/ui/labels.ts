@@ -24,6 +24,8 @@ export const FEATURE_LABEL: Record<string, string> = {
   disk_full: 'disk full (100%)',
   lag_up: 'consumer lag climbing',
   log_tls: 'x509 / certificate expired',
+  log_zone: 'instances failing in one zone',
+  log_ratelimit: '429 rate limited',
   log_disk: '"No space left on device"',
   log_config: 'config / flag change applied',
   log_poison: '"failed to process message"',

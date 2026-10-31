@@ -16,7 +16,10 @@ export type FixId =
   | 'renew_cert'
   | 'expand_disk'
   | 'skip_message'
-  | 'revert_config';
+  | 'revert_config'
+  | 'drain_zone'
+  | 'throttle'
+  | 'move_node';
 
 export const FIXES: Record<FixId, string> = {
   restart: 'Restart the service',
@@ -34,6 +37,9 @@ export const FIXES: Record<FixId, string> = {
   expand_disk: 'Free space and expand the volume',
   skip_message: 'Quarantine the poison message and restart the consumer',
   revert_config: 'Revert the config change or switch the flag off',
+  drain_zone: 'Drain the unhealthy zone and shift traffic',
+  throttle: 'Throttle outbound calls and ask for a higher quota',
+  move_node: 'Move the workload to a different node',
 };
 
 /** The right mitigation for each fault, and why the tempting alternatives don't work. */
@@ -50,6 +56,11 @@ export const FIX_FOR: Record<FaultId, { fix: FixId; why: string }> = {
   disk_full: { fix: 'expand_disk', why: 'Writes fail because the volume is full. Free space and expand it. Restarting or scaling out will not create disk space.' },
   poison_message: { fix: 'skip_message', why: 'The consumer is stuck on one bad message. Quarantine it and restart the consumer so the backlog can drain. Scaling consumers just crash-loops more of them.' },
   config_flag: { fix: 'revert_config', why: 'The errors began when the flag flipped, with no deploy. Reverting the flag is the fastest fix. A rollback would change nothing because the code never changed.' },
+  partial_zone: { fix: 'drain_zone', why: 'Only some instances in one zone are unhealthy, so draining that zone restores service. Rolling back or restarting everything would disturb the healthy instances too.' },
+  traffic_spike: { fix: 'scale_out', why: 'Real demand outgrew capacity, so adding replicas is exactly right here: scaling out is not always the wrong answer. A rollback or restart would not create capacity.' },
+  perf_regression: { fix: 'rollback', why: 'Latency rose right after a release with no errors, so roll it back. A restart would bring the same slow code back, and scaling out only hides the regression at a higher cost.' },
+  rate_limited: { fix: 'throttle', why: 'The vendor is healthy; you are being limited with 429s. Throttle your own calls and ask for a higher quota. More retries and longer timeouts make the limit worse.' },
+  noisy_neighbour: { fix: 'move_node', why: 'CPU is saturated without extra traffic, so another workload on the node is taking it. Move to a different node. Scaling out onto the same node would not help.' },
 };
 
 /** Four options, one correct, in a stable order for a given incident. */

@@ -20,13 +20,14 @@ You get paged: latency is burning the SLO. You and an AI investigator see **the 
 
 | | | |
 |:---:|:---:|:---:|
-| ![Investigating a slow third-party API](docs/screens/match.png) | ![Choosing the fix after the diagnosis](docs/screens/fix.png) | ![The postmortem with the AI's belief and reasoning](docs/screens/postmortem.png) |
+| ![Investigating a vendor rate limit](docs/screens/match.png) | ![Choosing the fix after the diagnosis](docs/screens/fix.png) | ![The postmortem with the AI's belief and reasoning](docs/screens/postmortem.png) |
 | Investigate | Choose the fix | Compare with the AI |
 
 Incidents are generated from a seed (random service graph, culprit, noise and red herrings), so there is always a new one, plus a **daily** that is the same for everyone.
 
-- **12 kinds of failure**, from memory leaks and retry storms to expired certificates, full disks and stuck queue consumers. Some page nobody at all.
+- **17 kinds of failure**, from memory leaks and retry storms to expired certificates, full disks, vendor rate limits and stuck queue consumers. Some page nobody at all, and one is just real demand where scaling out is the right fix.
 - **Diagnose, then fix.** Pick the mitigation that actually stops the bleeding; the postmortem explains why the tempting ones don't work.
+- **A race you can feel.** A live race track shows you and the AI moving from paged to mitigated while an SLO error budget burns. Every result shares a link to the exact incident, so a friend can try to beat it.
 - **Built to be learned from.** A 2-minute guided training, an optional coach that explains what each signal usually means, and hints that cost time.
 
 ## Is the AI real?
@@ -73,7 +74,7 @@ npm run dev
 
 PRs are welcome: fork, branch, open a PR. `main` is protected, CI must pass and every PR is reviewed, with a Vercel preview so reviewers can play your change. Read **[CONTRIBUTING.md](CONTRIBUTING.md)** first.
 
-The best contribution is a **new fault type**: an entry in [`src/sim/faults.ts`](src/sim/faults.ts) (where it can happen, its symptoms, a postmortem story) and one in [`src/sim/fixes.ts`](src/sim/fixes.ts) (the right mitigation and why the tempting ones fail). Ideas: clock skew, noisy neighbour, a partial availability-zone failure, autoscaling lag, a hot shard.
+The best contribution is a **new fault type**: an entry in [`src/sim/faults.ts`](src/sim/faults.ts) (where it can happen, its symptoms, a postmortem story) and one in [`src/sim/fixes.ts`](src/sim/fixes.ts) (the right mitigation and why the tempting ones fail). Ideas: clock skew, autoscaling lag, a hot shard, a split brain, multi-region cascades.
 
 ## Roadmap
 

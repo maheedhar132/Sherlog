@@ -62,6 +62,8 @@ const LOG_PATTERNS: [string, RegExp][] = [
   ['log_overload', /queue full|load shedding/],
   ['log_dns', /ENOTFOUND|no such host/],
   ['log_tls', /x509|certificate has expired/],
+  ['log_zone', /health check failed for \d+ of \d+ instances/],
+  ['log_ratelimit', /429 Too Many Requests/],
   ['log_disk', /No space left on device/],
   ['log_config', /config change applied/],
   ['log_poison', /failed to process message/],

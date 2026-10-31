@@ -120,3 +120,32 @@ export function ServiceMap({ topology, alerts, selected, queried, onSelect, expa
   );
   return expanded ? <div className="map-scroll">{svg}</div> : svg;
 }
+
+/** The same services as a wrapping list of buttons, shown instead of the diagram on narrow screens. */
+export function ServiceChips({ topology, alerts, selected, queried, onSelect }: Omit<Props, 'expanded'>) {
+  return (
+    <div className="service-chips" role="group" aria-label="Services">
+      {topology.services.map((s) => {
+        const seen = (['metrics', 'logs', 'traces'] as const)
+          .filter((c) => queried.has(`${c}:${s.id}`))
+          .map((c) => c[0].toUpperCase())
+          .join('');
+        return (
+          <button
+            key={s.id}
+            className={`chip ${alerts.has(s.id) ? 'alerting' : ''} ${selected === s.id ? 'selected' : ''}`}
+            aria-pressed={selected === s.id}
+            onClick={() => onSelect(s.id)}
+          >
+            {alerts.has(s.id) && <i className="dot" aria-hidden="true" />}
+            {s.id}
+            <small>
+              {KIND_LABEL[s.kind]}
+              {seen ? ` · ${seen}` : ''}
+            </small>
+          </button>
+        );
+      })}
+    </div>
+  );
+}

@@ -285,6 +285,107 @@ export const FAULTS: Record<FaultId, FaultDef> = {
       fx.configs.add(s);
     },
   },
+  partial_zone: {
+    id: 'partial_zone',
+    name: 'Partial zone failure',
+    short: 'Some instances in one availability zone go unhealthy',
+    targets: ['app'],
+    story: (s) =>
+      `A few ${s} instances in one availability zone stopped passing health checks after a network fault there. The load balancer kept routing some requests to them, so a slice of traffic failed while the rest was fine.`,
+    signals: [
+      'Errors climb, but latency stays normal',
+      '"health check failed for N of 6 instances in zone ..." in its logs',
+      'No deploy or config change near the alert, and no stack traces',
+    ],
+    tip: 'A partial failure hits a slice of traffic. Look for instances or zones, not a bug in the code.',
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'err_up');
+      addFx(fx, s, 'logs', 'log_zone');
+      addFx(fx, s, 'traces', 'tr_self_err');
+    },
+  },
+
+  traffic_spike: {
+    id: 'traffic_spike',
+    name: 'Legitimate traffic spike',
+    short: 'Real demand outgrows capacity',
+    targets: ['app'],
+    story: (s) =>
+      `A promotion drove several times the normal traffic to ${s}. Nothing was broken: demand simply outgrew the capacity it was running with, so CPU saturated and latency climbed.`,
+    signals: [
+      "Its own request rate jumps, with CPU saturated and latency up",
+      'Load shedding in its own logs, but no retries anywhere',
+      'No deploy, no config change and no errors from a dependency',
+    ],
+    tip: 'Not every incident is a bug. Check traffic first: if demand is the cause, adding capacity is the right fix.',
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'rps_up', 'cpu_up', 'lat_up');
+      addFx(fx, s, 'logs', 'log_overload');
+      addFx(fx, s, 'traces', 'tr_self_slow');
+    },
+  },
+
+  perf_regression: {
+    id: 'perf_regression',
+    name: 'Performance regression',
+    short: 'A release is correct but much slower',
+    targets: ['app', 'worker'],
+    story: (s) =>
+      `A new version of ${s} shipped with an inefficient code path. It returns the right answers, just slowly, so latency rose the minute the deploy finished while the error rate stayed flat.`,
+    signals: [
+      'A deploy lands right before the alert',
+      'Latency climbs but errors stay normal',
+      'Its own span is slow; no memory pattern, no log errors',
+    ],
+    tip: 'Latency up with no errors right after a deploy is a performance regression, not a crash.',
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'lat_up');
+      addFx(fx, s, 'traces', 'tr_self_slow');
+      fx.deploys.add(s);
+    },
+  },
+
+  rate_limited: {
+    id: 'rate_limited',
+    name: 'Vendor rate limit',
+    short: 'A healthy third party starts rejecting your calls with 429',
+    targets: ['external'],
+    story: (s) =>
+      `${s} is perfectly healthy, but a traffic increase pushed your calls past your quota, so it began answering 429 Too Many Requests. Its dashboards look fine; only your side shows errors.`,
+    signals: [
+      'Callers see errors, with "429 Too Many Requests" in their logs',
+      "The third party's own metrics look healthy",
+      'The failing span is the call to the third party',
+    ],
+    tip: 'The other side can be healthy and still be the cause: check whether you are being limited.',
+    applies: (t, s) => t.callers[s].length > 0,
+    effects: (t, s, fx) => {
+      for (const c of t.callers[s]) {
+        addFx(fx, c, 'metrics', 'err_up');
+        addFx(fx, c, 'logs', 'log_ratelimit');
+        addFx(fx, c, 'traces', 'tr_dep_err');
+      }
+    },
+  },
+
+  noisy_neighbour: {
+    id: 'noisy_neighbour',
+    name: 'Noisy neighbour',
+    short: 'Another workload on the same node steals the CPU',
+    targets: ['app', 'db'],
+    story: (s) =>
+      `A batch job from another team landed on the same node as ${s} and consumed most of its CPU. Traffic and code were unchanged, but ${s} slowed to a crawl.`,
+    signals: [
+      'CPU saturated and latency up, with no extra traffic',
+      'No log errors, no deploy and no connection or memory pattern',
+      'Its own span is slow',
+    ],
+    tip: 'Saturated CPU without more traffic means something else is using it.',
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'cpu_up', 'lat_up');
+      addFx(fx, s, 'traces', 'tr_self_slow');
+    },
+  },
 };
 
 export const FAULT_IDS = Object.keys(FAULTS) as FaultId[];
