@@ -1516,3 +1516,13 @@ h3 {
 .match > * {
   min-width: 0;
 }
+
+.hero-demo {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  margin-top: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+}

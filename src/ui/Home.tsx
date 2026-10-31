@@ -74,6 +74,9 @@ export function Home({ profile, onPlay, onTutorial, onDaily, onShift, onOpenGuid
           )}
         </div>
         <p className="sub">free · runs entirely in your browser · no server, no account, no API keys, no tracking</p>
+        {!profile.tutorialDone && (
+          <img className="hero-demo" src={`${import.meta.env.BASE_URL}demo.gif`} alt="A recording of an incident being solved: paged services, dashboards, the root cause and the fix" width="960" height="540" loading="lazy" />
+        )}
       </section>
 
       {placement && (
