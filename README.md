@@ -4,7 +4,10 @@
 
 **Production is on fire. Race an AI on-call engineer to the root cause. It learns how you debug.**
 
-[▶ Play in your browser](https://maheedhar132.github.io/Sherlog/) · free · offline · no account · no API keys
+<!-- After the first Vercel deploy, replace this line with: [▶ Play in your browser](https://<your-project>.vercel.app) -->
+free · offline · no account · no API keys
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmaheedhar132%2FSherlog)
 
 <!-- Record a 15s GIF of one match and drop it here: it's the single biggest driver of stars. -->
 <!-- ![Sherlog demo](docs/demo.gif) -->
@@ -62,6 +65,16 @@ npm run dev
 ```
 
 `npm test` runs the simulation and AI test suite. It checks determinism, that detection reads back exactly what was rendered, that the AI always converges on the true cause, and that adaptation hits each mode's target win rate.
+
+## Deploy your own
+
+Sherlog is a static site with no backend, so it hosts free anywhere. It's set up for **Vercel**:
+
+1. Click **Deploy with Vercel** above, or import the repo at [vercel.com/new](https://vercel.com/new).
+2. Keep the detected settings. [`vercel.json`](vercel.json) already sets Vite, `npm run build` and the `dist` output.
+3. Every push to `main` redeploys automatically, and every pull request gets a preview URL.
+
+GitHub Actions ([`ci.yml`](.github/workflows/ci.yml)) runs the tests and build on every push and pull request.
 
 ## Project layout
 
