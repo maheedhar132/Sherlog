@@ -76,7 +76,7 @@ Being straight about this is the point of the page:
 - **"Adding a fault needs no AI code"** is tested (`tests/unseen-fault.test.ts`), but the test hands the AI the new fault's symptoms. It shows the reasoning generalises to a new table, not that the AI discovers failure types.
 - **It adapts to how well you do, not how you debug.** After each match it moves one strength number toward your mode's target win rate (Easy 70%, Normal 50%, Hard 30%) and tracks a win record per fault type to pick your next incident (Thompson sampling). It does not model your habits, such as which dashboard you open first.
 - **The balance is tuned on simulated players.** Convergence to the target win rates is tested against simulated players, not real people yet.
-- **The incidents are a stylised teaching sim** with 6 fault types and binary symptoms, not real production data.
+- **The incidents are a stylised teaching sim** with 12 fault types and binary symptoms, not real production data.
 - **There is no LLM.** That is a design choice: for a diagnosis problem with a known set of causes, probabilistic reasoning is cheaper, faster and explainable. It costs nothing to run.
 
 ## Guessing does not pay
