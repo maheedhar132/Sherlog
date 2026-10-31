@@ -9,7 +9,7 @@ import { RECOVERY_MS, Recovery, type RecoveryKind } from './Recovery';
 import { FAULTS, FAULT_IDS, isCompatible } from '../sim/faults';
 import { FIXES, FIX_FOR, STOPGAP_FOR, fixOptions, type FixId } from '../sim/fixes';
 import { queryCost, sameHypothesis } from '../sim/incident';
-import { ERROR_BUDGET_SECONDS, pages } from '../sim/slo';
+import { ERROR_BUDGET_SECONDS, failedPerSecond, pages } from '../sim/slo';
 import type { FaultId, QueryKey, ServiceKind } from '../sim/types';
 import { CHANNEL_ICON, KIND_LABEL, describeQuery } from './labels';
 import { Modal } from './Modal';
@@ -81,6 +81,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   const nextFixPenalty = wrongPenalty(badFixes.length + 1);
   const aiNow = aiStateAt(ai, wall);
   const alerts = useMemo(() => detectAlerts(incident), [incident]);
+  const failRate = useMemo(() => failedPerSecond(incident, alerts), [incident, alerts]);
   const pageLines = useMemo(
     () => [...pages(incident, alerts), ...incident.noise.map((text) => ({ service: text, text }))],
     [incident, alerts],
@@ -308,6 +309,11 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
               SLO error budget: {Math.round(budgetUsed * 100)}% burned{budgetUsed >= 1 ? ' (exhausted)' : ''}
             </span>
           </div>
+          {failRate > 0 && phase !== 'practice' && (
+            <div className="impact" aria-live="off">
+              👥 ≈ {Math.round(failRate * clock).toLocaleString()} customer requests failed so far
+            </div>
+          )}
         </div>
       </header>
       {rivalAlert && (
@@ -411,6 +417,15 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
                 </optgroup>
               </select>
             </label>
+            {likely.length > 0 && (
+              <div className="shortlist" aria-label="Best matches for what you have seen">
+                {likely.map((f) => (
+                  <button key={f} className={declFault === f ? 'pick on' : 'pick'} onClick={() => setDeclFault(f)}>
+                    {FAULTS[f].name}
+                  </button>
+                ))}
+              </div>
+            )}
             <button className="primary" onClick={declare} disabled={!declFault || t.byId[declService].kind === 'gateway'}>
               Declare
             </button>

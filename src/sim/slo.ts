@@ -37,3 +37,16 @@ export function pages(inc: Incident, services: Iterable<string>): Page[] {
   }
   return out;
 }
+
+/** Requests per second each service handles, for a rough count of how many customers an incident fails. */
+const REQUESTS_PER_SECOND = 150;
+
+/** Failed requests per second across the services that are paging (a stylised figure to show what the clock costs). */
+export function failedPerSecond(inc: Incident, paging: Iterable<string>): number {
+  let rate = 0;
+  for (const id of paging) {
+    const err = inc.data.metrics[id]?.find((s) => s.name.startsWith('error'))?.values ?? [];
+    rate += (mean(nums(err).slice(-8)) / 100) * REQUESTS_PER_SECOND;
+  }
+  return rate;
+}

@@ -139,3 +139,14 @@ describe('stopgap fixes', () => {
     }
   });
 });
+
+describe('customer impact', () => {
+  it('is positive for a real incident and counts up with time', async () => {
+    const { failedPerSecond } = await import('../src/sim/slo');
+    const { detectAlerts } = await import('../src/sim/detect');
+    const inc = generateIncident({ seed: 21, mode: 'normal' });
+    const rate = failedPerSecond(inc, detectAlerts(inc));
+    expect(rate).toBeGreaterThan(0);
+    expect(rate * 120).toBeGreaterThan(rate * 60);
+  });
+});

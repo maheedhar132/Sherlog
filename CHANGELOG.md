@@ -23,6 +23,7 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 - The service map is a full-width strip, readable without expanding it.
 - Every system now has a queue and a worker. Easy systems are smaller, Hard systems are bigger and lose one signal on the culprit, so the three modes differ by more than AI speed.
 - The AI treats a deploy and a config change as different evidence and commits when no remaining dashboard is worth its time cost.
+- **What the clock costs:** a live count of customer requests failed so far, and the shortlist now shows as chips you can click under the fault picker.
 - **Watch the fix work:** after you choose a fix, the service's latency responds on screen: a cure recovers, a stopgap dips and climbs back, a wrong fix changes nothing.
 - **Four more fault types** (21 in all): long GC pauses, clock skew, lock contention behind a migration, and a runaway batch job. Each has its own log signature, cure and (for three) a tempting stopgap. A seed with no forced fault still picks from the original 17, so existing seeds and shared links are unchanged.
 - **A shortlist in the fault picker:** once you have opened dashboards on a service, the faults that best explain them are listed first. It reads only what you have paid to see, and it is off on Hard.
