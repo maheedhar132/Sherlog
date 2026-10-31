@@ -26,7 +26,7 @@ Thanks for helping make on-call less scary. Sherlog is maintained by [@maheedhar
 
 ## What we'll push back on
 
-- **Anything that needs a server, an account or an API key.** Sherlog stays free, offline and private.
+- **Anything that needs a server, an account or an API key.** Sherlog stays free, private and runs entirely in the browser.
 - **Making the AI read hidden state.** It must only use the query API the player has. That's the whole point.
 - **Large dependencies** for small gains. The game ships about 65 KB of gzipped JavaScript.
 

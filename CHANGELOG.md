@@ -36,7 +36,7 @@ The first public release.
 - Daily incident with a fixed AI, plus a Wordle-style share card.
 - Expandable service map with full names and dependency arrows.
 - Field guide, profile export and import, and link-preview images for social sharing.
-- [HOW-IT-WORKS.md](HOW-IT-WORKS.md), explaining why the opponent is AI and not hardcoded rules, backed by a test where it solves a fault type it was never written for.
+- [HOW-IT-WORKS.md](HOW-IT-WORKS.md), explaining why the opponent is AI and not hardcoded rules, backed by a test that a new fault type needs no AI code changes.
 
 [Unreleased]: https://github.com/maheedhar132/Sherlog/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/maheedhar132/Sherlog/releases/tag/v1.0.0
