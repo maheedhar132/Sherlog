@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { newProfile, recordMatch, type Profile } from '../ai/adapter';
-import { createDaily, createFromSeed, createMatch, createShiftIncident, createTutorial, parseIncidentHash, shareText, type MatchResult, type MatchSetup } from '../game/session';
+import { createDaily, createAftershock, createFromSeed, createMatch, createShiftIncident, createTutorial, parseIncidentHash, shareText, type MatchResult, type MatchSetup } from '../game/session';
 import { isBetterShift, scoreShift, SHIFT_LENGTH, toEntry, type ShiftEntry } from '../game/shift';
 import { recordDaily } from '../game/streak';
 import { exportProfile, importProfile, loadProfile, saveProfile } from '../lib/storage';
@@ -138,7 +138,7 @@ export function App() {
       )}
       {screen.name === 'match' && (
         <Match
-          key={screen.setup.incident.seed}
+          key={`${screen.setup.incident.seed}${screen.setup.wave ? "-2" : ""}`}
           setup={screen.setup}
           coachDefault={profile.played < 3 || screen.setup.mode === 'easy'}
           onFinish={(r) => finish(screen.setup, r)}
@@ -153,6 +153,7 @@ export function App() {
           strengthBefore={screen.before}
           strengthAfter={screen.after}
           onNext={() => advance(screen.setup)}
+          onAftershock={() => setScreen({ name: 'match', setup: createAftershock(screen.setup, profile) })}
           onHome={() => setScreen({ name: 'home' })}
         />
       )}

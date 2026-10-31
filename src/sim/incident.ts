@@ -11,6 +11,8 @@ export interface IncidentOptions {
   mode: Mode;
   /** Force a fault type (used by the adaptive scenario picker); otherwise chosen from the seed. */
   fault?: FaultId;
+  /** An aftershock: the same system as `seed`, hit by a different, unrelated fault. */
+  aftershockOf?: Hypothesis;
 }
 
 export function hypotheses(t: Topology): Hypothesis[] {
@@ -19,10 +21,11 @@ export function hypotheses(t: Topology): Hypothesis[] {
   return out;
 }
 
-export function generateIncident({ seed, mode, fault }: IncidentOptions): Incident {
-  const rng = mulberry32(seed);
+export function generateIncident({ seed, mode, fault, aftershockOf }: IncidentOptions): Incident {
+  let rng = mulberry32(seed);
   const topology = generateTopology(rng, mode);
-  const wanted = fault ?? pick(rng, FAULT_IDS);
+  if (aftershockOf) rng = mulberry32(seed ^ 0x5bd1e995);
+  const wanted = fault ?? pick(rng, aftershockOf ? FAULT_IDS.filter((f) => f !== aftershockOf.fault) : FAULT_IDS);
   let targets = topology.services.filter((s) => isCompatible(topology, s.id, wanted));
   let chosen = wanted;
   if (!targets.length) {
@@ -30,7 +33,9 @@ export function generateIncident({ seed, mode, fault }: IncidentOptions): Incide
     chosen = FAULT_IDS.find((f) => topology.services.some((s) => isCompatible(topology, s.id, f)))!;
     targets = topology.services.filter((s) => isCompatible(topology, s.id, chosen));
   }
-  const truth: Hypothesis = { service: pick(rng, targets).id, fault: chosen };
+  // An aftershock never lands on the service that just failed, when there is another choice.
+  const others = aftershockOf ? targets.filter((s) => s.id !== aftershockOf.service) : targets;
+  const truth: Hypothesis = { service: pick(rng, others.length ? others : targets).id, fault: chosen };
   const fx = faultEffects(topology, truth);
   const noise: string[] = [];
   const herrings = addHerrings(topology, fx, truth, mode, rng, noise);

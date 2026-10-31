@@ -30,10 +30,11 @@ interface Props {
   strengthBefore: number;
   strengthAfter: number;
   onNext: () => void;
+  onAftershock: () => void;
   onHome: () => void;
 }
 
-export function Postmortem({ setup, result, profile, strengthBefore, strengthAfter, onNext, onHome }: Props) {
+export function Postmortem({ setup, result, profile, strengthBefore, strengthAfter, onNext, onAftershock, onHome }: Props) {
   const { incident, ai } = setup;
   const truth = incident.truth;
   const fault = FAULTS[truth.fault];
@@ -71,7 +72,7 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
     <div className="postmortem">
       <header className="pm-head">
         <div>
-          <h1>{headline}</h1>
+          <h1>{setup.wave ? '🌩 Aftershock: ' : ''}{headline}</h1>
           {result.breached && <p className="muted">🔥 SLO breached: the incident burned the whole 10-minute error budget.</p>}
         </div>
         <div className="pm-score">
@@ -228,8 +229,13 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
           <pre className="share">{share}</pre>
           <div className="row-buttons">
             <button onClick={copy}>{copied ? 'Copied ✓' : '📋 Copy result'}</button>
+            {setup.aftershock && result.playerMttr !== null && (
+              <button className="primary aftershock" onClick={onAftershock}>
+                🌩 Aftershock: a new alert is firing →
+              </button>
+            )}
             {!setup.daily && (
-              <button className="primary" onClick={onNext}>
+              <button className={setup.aftershock && result.playerMttr !== null ? '' : 'primary'} onClick={onNext}>
                 {setup.tutorial ? 'Play a real incident →' : setup.shift ? (setup.shift.n < setup.shift.of ? `Next in your shift (${setup.shift.n + 1}/${setup.shift.of}) →` : 'See your shift →') : 'Next incident →'}
               </button>
             )}

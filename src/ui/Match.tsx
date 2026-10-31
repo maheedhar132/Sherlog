@@ -245,7 +245,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
         </div>
         <div className="incident-title">
           <div className="inc-id">
-            {setup.tutorial ? 'TRAINING' : setup.shift ? `SHIFT ${setup.shift.n}/${setup.shift.of} · INC-${incident.seed}` : setup.daily ? `DAILY #${setup.daily.number}` : `INC-${incident.seed}`} · {setup.mode.toUpperCase()}
+            {setup.tutorial ? 'TRAINING' : setup.wave ? `AFTERSHOCK · INC-${incident.seed}` : setup.shift ? `SHIFT ${setup.shift.n}/${setup.shift.of} · INC-${incident.seed}` : setup.daily ? `DAILY #${setup.daily.number}` : `INC-${incident.seed}`} · {setup.mode.toUpperCase()}
           </div>
           <div className="paging">
             🔔 PAGED 14:02 · {alerts.size ? `${alerts.size} alerting` : 'customers report problems, no alert fired'}

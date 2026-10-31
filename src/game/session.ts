@@ -17,6 +17,10 @@ export interface MatchSetup {
   forced?: FaultId;
   /** Position in an on-call shift, a run of back-to-back incidents scored together. */
   shift?: { n: number; of: number };
+  /** True when a second, unrelated fault will hit this system once this one is fixed. */
+  aftershock?: boolean;
+  /** Set on the second incident of a system. */
+  wave?: 2;
 }
 
 export interface PlayerAction {
@@ -58,13 +62,13 @@ export function createMatch(profile: Profile, mode: Mode): MatchSetup {
   let fault = profile.played < 1 ? undefined : pickFault(profile, Math.random);
   for (let i = 0; fault && recent.includes(fault) && i < 4; i++) fault = pickFault(profile, Math.random);
   const incident = generateIncident({ seed, mode, fault });
-  return { incident, ai: simulateAi(incident, profile.strength[mode]), mode, daily: null, forced: fault };
+  return { incident, ai: simulateAi(incident, profile.strength[mode]), mode, daily: null, forced: fault, aftershock: hasAftershock(seed, mode) };
 }
 
 /** Rebuild a specific incident from a shared link, racing the AI at the player's own level. */
 export function createFromSeed(seed: number, mode: Mode, profile: Profile, forced?: FaultId): MatchSetup {
   const incident = generateIncident({ seed, mode, fault: forced });
-  return { incident, ai: simulateAi(incident, profile.strength[mode]), mode, daily: null, forced };
+  return { incident, ai: simulateAi(incident, profile.strength[mode]), mode, daily: null, forced, aftershock: hasAftershock(seed, mode) };
 }
 
 /** Parse `#seed=123&mode=normal&fault=disk_full`; null when it is not a valid incident link. */
@@ -119,5 +123,17 @@ export function shareText(setup: MatchSetup, result: MatchResult, url: string, s
 
 /** One incident of an on-call shift: the player's usual difficulty, with the AI at their level. */
 export function createShiftIncident(profile: Profile, mode: Mode, n: number, of: number): MatchSetup {
-  return { ...createMatch(profile, mode), shift: { n, of } };
+  return { ...createMatch(profile, mode), shift: { n, of }, aftershock: false };
+}
+
+/** Whether fixing this incident leaves a second fault behind. Decided by the seed, so a shared link behaves the same for everyone. */
+export function hasAftershock(seed: number, mode: Mode): boolean {
+  if (mode === 'easy') return false;
+  return (hashString(`aftershock:${seed}`) % 100) / 100 < (mode === 'hard' ? 0.6 : 0.4);
+}
+
+/** A second fault on the system you just fixed: a new race against an AI at your level. */
+export function createAftershock(prev: MatchSetup, profile: Profile): MatchSetup {
+  const incident = generateIncident({ seed: prev.incident.seed, mode: prev.mode, aftershockOf: prev.incident.truth });
+  return { incident, ai: simulateAi(incident, profile.strength[prev.mode]), mode: prev.mode, daily: null, wave: 2 };
 }

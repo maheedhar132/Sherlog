@@ -23,6 +23,7 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 - The service map is a full-width strip, readable without expanding it.
 - Every system now has a queue and a worker. Easy systems are smaller, Hard systems are bigger and lose one signal on the culprit, so the three modes differ by more than AI speed.
 - The AI treats a deploy and a config change as different evidence and commits when no remaining dashboard is worth its time cost.
+- **Aftershocks:** on Normal and Hard, fixing an incident can leave a second, unrelated fault on the same system, with a fresh race against the AI. It is decided by the seed, so a shared link behaves the same for everyone.
 - **On-call shift:** three incidents back to back, scored as one run (your total time against the AI's), with your best shift kept in your profile and a shareable summary.
 - Hard has no field guide or coach, anywhere in the app. The fault picker offers every fault (grouped by what fits the service) and starts blank, so Declare can't be one click away from a wrong guess. The AI paces itself a little faster, running out of the SLO error budget is recorded as a breach, and the header no longer sticks on short windows.
 - Span tags only point at causes that are real: a GC pause only when memory is climbing, a query plan only for a saturated database.
