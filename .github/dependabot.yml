@@ -5,8 +5,16 @@ updates:
     schedule:
       interval: weekly
     groups:
+      # react, react-dom and their types must move together: split PRs can't install (peer conflict).
+      react:
+        patterns: [react, react-dom, '@types/react', '@types/react-dom']
       dev-tooling:
         dependency-type: development
+        exclude-patterns: ['@types/react', '@types/react-dom']
+    ignore:
+      # Node's types track the Node major we run (see engines), not the newest Node.
+      - dependency-name: '@types/node'
+        update-types: [version-update:semver-major]
     open-pull-requests-limit: 5
   - package-ecosystem: github-actions
     directory: /
