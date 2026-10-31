@@ -33,10 +33,11 @@ export function todayKey(d = new Date()): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-const EPOCH = Date.UTC(2026, 10, 1);
+// Daily #1 is the public launch day.
+const EPOCH = Date.UTC(2026, 9, 31);
 export function dailyNumber(date: string): number {
   const [y, m, d] = date.split('-').map(Number);
-  return Math.floor((Date.UTC(y, m - 1, d) - EPOCH) / 86400000) + 1;
+  return Math.max(1, Math.floor((Date.UTC(y, m - 1, d) - EPOCH) / 86400000) + 1);
 }
 
 export function createMatch(profile: Profile, mode: Mode): MatchSetup {

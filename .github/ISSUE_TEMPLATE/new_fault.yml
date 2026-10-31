@@ -1,0 +1,30 @@
+name: New fault type
+description: Propose a new kind of incident for the game
+labels: [new-fault, enhancement]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Fault name
+      placeholder: Certificate expiry
+    validations:
+      required: true
+  - type: textarea
+    id: story
+    attributes:
+      label: What happens in production?
+      description: The real-world failure, ideally from an incident you've seen.
+    validations:
+      required: true
+  - type: textarea
+    id: signals
+    attributes:
+      label: Tell-tale signals
+      description: What shows up in metrics, logs, traces and deploys, on the culprit and on its callers?
+    validations:
+      required: true
+  - type: textarea
+    id: confusable
+    attributes:
+      label: What could it be confused with?
+      description: Which existing fault looks similar, and what tells them apart?

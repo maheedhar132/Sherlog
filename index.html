@@ -3,13 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sherlog</title>
-    <meta name="description" content="Race an adaptive AI investigator to the root cause of a simulated production incident. Free, offline, in your browser." />
-    <meta property="og:title" content="Sherlog" />
-    <meta property="og:description" content="Production is on fire. Race an AI that learns how you debug." />
+    <title>Sherlog: the on-call detective game</title>
+    <meta name="description" content="Production is on fire. Race an AI investigator to the root cause using metrics, logs, traces and deploys. It learns how you debug. Free, offline, in your browser." />
+    <meta name="theme-color" content="#0a0e13" />
+    <link rel="canonical" href="%SITE_URL%/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Sherlog" />
+    <meta property="og:title" content="Sherlog: race an AI to the root cause" />
+    <meta property="og:description" content="Production is on fire. You and an AI investigator get the same dashboards. First to name the root cause wins, and the AI learns how you debug." />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:image" content="%SITE_URL%/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Sherlog: a service map with paging alerts, a latency spike, and a race clock: You 1:42 vs AI 2:19" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sherlog: race an AI to the root cause" />
+    <meta name="twitter:description" content="An on-call detective game. Same dashboards as the AI, first to the root cause wins. It learns how you debug." />
+    <meta name="twitter:image" content="%SITE_URL%/og.png" />
+
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>" />
   </head>
   <body>
+    <noscript>Sherlog is an interactive game and needs JavaScript enabled.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
