@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1640 1104" width="1640" height="1104">
+<defs>
+<marker id="a-93a3b8" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#93a3b8"/></marker>
+<marker id="a-ffb84d" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffb84d"/></marker>
+<marker id="a-4cc2ff" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4cc2ff"/></marker>
+<marker id="a-b48cff" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b48cff"/></marker>
+<marker id="a-ff5d6c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ff5d6c"/></marker>
+</defs>
+<rect width="1640" height="1104" fill="#0a0e13"/>
+<text x="48" y="70" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#d8e0ea" text-anchor="start">How Sherlog works</text>
+<text x="48" y="106" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="400" fill="#93a3b8" text-anchor="start">Every incident is random. The AI reasons over evidence. The symptom textbook is written by people.</text>
+<rect x="760" y="130" width="16" height="16" rx="4" fill="#ffb84d"/>
+<text x="786" y="144" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">random per seed</text>
+<rect x="940.5" y="130" width="16" height="16" rx="4" fill="#4cc2ff"/>
+<text x="966.5" y="144" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">written by people</text>
+<rect x="1137.6" y="130" width="16" height="16" rx="4" fill="#b48cff"/>
+<text x="1163.6" y="144" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">reasoned by the AI</text>
+<rect x="1343.0" y="130" width="16" height="16" rx="4" fill="#ff5d6c"/>
+<text x="1369.0" y="144" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">hidden from the AI</text>
+<text x="48" y="178" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="17" font-weight="700" fill="#d8e0ea" text-anchor="start" letter-spacing="1.5">1  GENERATE</text>
+<text x="198" y="178" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">from one seed</text>
+<text x="560" y="178" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="17" font-weight="700" fill="#d8e0ea" text-anchor="start" letter-spacing="1.5">2  OBSERVE</text>
+<text x="698" y="178" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">the same dashboards for both</text>
+<text x="1110" y="178" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="17" font-weight="700" fill="#d8e0ea" text-anchor="start" letter-spacing="1.5">3  REASON</text>
+<text x="1260" y="178" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">the AI: Bayesian diagnosis</text>
+<rect x="48" y="196" width="452" height="98" rx="12" fill="#111821" stroke="#ffb84d" stroke-width="2"/>
+<rect x="48" y="208" width="6" height="74" rx="3" fill="#ffb84d"/>
+<text x="72" y="227" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">Seed</text>
+<text x="484" y="223" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#ffb84d" text-anchor="end" letter-spacing="1.2">RANDOM</text>
+<text x="72" y="252" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">One number picks everything below. The same seed gives</text>
+<text x="72" y="273" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">the same incident for everyone: that is the daily.</text>
+<rect x="48" y="314" width="452" height="98" rx="12" fill="#111821" stroke="#ffb84d" stroke-width="2"/>
+<rect x="48" y="326" width="6" height="74" rx="3" fill="#ffb84d"/>
+<text x="72" y="345" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">Random service graph</text>
+<text x="484" y="341" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#ffb84d" text-anchor="end" letter-spacing="1.2">RANDOM</text>
+<text x="72" y="370" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">7 to 12 services: gateway, apps, databases, a cache,</text>
+<text x="72" y="391" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">maybe a queue, a third-party API.</text>
+<rect x="48" y="432" width="452" height="98" rx="12" fill="#111821" stroke="#ffb84d" stroke-width="2"/>
+<rect x="48" y="444" width="6" height="74" rx="3" fill="#ffb84d"/>
+<text x="72" y="463" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">Random culprit and fault</text>
+<text x="484" y="459" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#ffb84d" text-anchor="end" letter-spacing="1.2">RANDOM</text>
+<text x="72" y="488" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">One of 6 fault types, on a service where it can happen</text>
+<text x="72" y="509" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">(no memory leak on a database).</text>
+<rect x="48" y="550" width="452" height="98" rx="12" fill="#111821" stroke="#4cc2ff" stroke-width="2"/>
+<rect x="48" y="562" width="6" height="74" rx="3" fill="#4cc2ff"/>
+<text x="72" y="581" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">Symptom table + spread</text>
+<text x="484" y="577" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#4cc2ff" text-anchor="end" letter-spacing="1.2">AUTHORED</text>
+<text x="72" y="606" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">What each fault looks like on each dashboard, then</text>
+<text x="72" y="627" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">passed up to the services that call it.</text>
+<rect x="48" y="668" width="452" height="98" rx="12" fill="#111821" stroke="#ffb84d" stroke-width="2"/>
+<rect x="48" y="680" width="6" height="74" rx="3" fill="#ffb84d"/>
+<text x="72" y="699" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">Red herrings and noise</text>
+<text x="484" y="695" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#ffb84d" text-anchor="end" letter-spacing="1.2">RANDOM</text>
+<text x="72" y="724" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">An unrelated CPU spike, a coincidental deploy,</text>
+<text x="72" y="745" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">harmless retries, jittered numbers.</text>
+<rect x="48" y="786" width="452" height="98" rx="12" fill="#111821" stroke="#ffb84d" stroke-width="2"/>
+<rect x="48" y="798" width="6" height="74" rx="3" fill="#ffb84d"/>
+<text x="72" y="817" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">Raw signals</text>
+<text x="484" y="813" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#ffb84d" text-anchor="end" letter-spacing="1.2">RANDOM</text>
+<text x="72" y="842" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">Metric series, log lines, trace spans and a deploy</text>
+<text x="72" y="863" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">log, rendered from all of the above.</text>
+<path d="M274,294 L274,314" fill="none" stroke="#93a3b8" stroke-width="2.2" marker-end="url(#a-93a3b8)"/>
+<path d="M274,412 L274,432" fill="none" stroke="#93a3b8" stroke-width="2.2" marker-end="url(#a-93a3b8)"/>
+<path d="M274,530 L274,550" fill="none" stroke="#93a3b8" stroke-width="2.2" marker-end="url(#a-93a3b8)"/>
+<path d="M274,648 L274,668" fill="none" stroke="#93a3b8" stroke-width="2.2" marker-end="url(#a-93a3b8)"/>
+<path d="M274,766 L274,786" fill="none" stroke="#93a3b8" stroke-width="2.2" marker-end="url(#a-93a3b8)"/>
+<rect x="560" y="196" width="480" height="214" rx="12" fill="#111821" stroke="#2b3b50" stroke-width="2"/>
+<text x="584" y="228" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">The dashboards</text>
+<rect x="584" y="250" width="432" height="24" rx="6" fill="#17202b"/>
+<text x="598" y="267" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">Service map + paging alerts</text>
+<text x="1004" y="267" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="14" font-weight="400" fill="#93a3b8" text-anchor="end">free</text>
+<rect x="584" y="279" width="432" height="24" rx="6" fill="#17202b"/>
+<text x="598" y="296" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">Metrics</text>
+<text x="1004" y="296" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="14" font-weight="400" fill="#93a3b8" text-anchor="end">10 s</text>
+<rect x="584" y="308" width="432" height="24" rx="6" fill="#17202b"/>
+<text x="598" y="325" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">Logs</text>
+<text x="1004" y="325" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="14" font-weight="400" fill="#93a3b8" text-anchor="end">15 s</text>
+<rect x="584" y="337" width="432" height="24" rx="6" fill="#17202b"/>
+<text x="598" y="354" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">Traces</text>
+<text x="1004" y="354" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="14" font-weight="400" fill="#93a3b8" text-anchor="end">20 s</text>
+<rect x="584" y="366" width="432" height="24" rx="6" fill="#17202b"/>
+<text x="598" y="383" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">Deploy history</text>
+<text x="1004" y="383" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="14" font-weight="400" fill="#93a3b8" text-anchor="end">5 s</text>
+<rect x="560" y="440" width="228" height="150" rx="12" fill="#111821" stroke="#93a3b8" stroke-width="2"/>
+<rect x="560" y="452" width="6" height="126" rx="3" fill="#93a3b8"/>
+<text x="584" y="471" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">You</text>
+<text x="772" y="467" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#93a3b8" text-anchor="end" letter-spacing="1.2">HUMAN</text>
+<text x="584" y="496" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">Open a dashboard, read it,</text>
+<text x="584" y="517" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">form a theory. Real time</text>
+<text x="584" y="538" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">plus query costs.</text>
+<rect x="812" y="440" width="228" height="150" rx="12" fill="#111821" stroke="#b48cff" stroke-width="2"/>
+<rect x="812" y="452" width="6" height="126" rx="3" fill="#b48cff"/>
+<text x="836" y="471" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">The AI</text>
+<text x="1024" y="467" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#b48cff" text-anchor="end" letter-spacing="1.2">AI</text>
+<text x="836" y="496" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">Opens the dashboards it</text>
+<text x="836" y="517" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">picks. Reads them through</text>
+<text x="836" y="538" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">the same detectors a</text>
+<text x="836" y="559" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">dashboard summary uses.</text>
+<text x="800" y="430" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#93a3b8" text-anchor="middle">both pay the same time costs</text>
+<rect x="560" y="640" width="480" height="140" rx="12" fill="#111821" stroke="#ff5d6c" stroke-width="2" stroke-dasharray="7 6"/>
+<rect x="560" y="652" width="6" height="116" rx="3" fill="#ff5d6c"/>
+<text x="584" y="671" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">Hidden truth: culprit + fault</text>
+<text x="1024" y="667" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#ff5d6c" text-anchor="end" letter-spacing="1.2">HIDDEN</text>
+<text x="584" y="696" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">Only the referee reads it, to mark a declaration right</text>
+<text x="584" y="717" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">or wrong. The AI is built from a view that does not</text>
+<text x="584" y="738" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">contain it, and a test swaps the answer to prove its</text>
+<text x="584" y="759" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">behaviour does not change.</text>
+<path d="M500,835 L530,835 L530,296 L560,296" fill="none" stroke="#93a3b8" stroke-width="2.2" marker-end="url(#a-93a3b8)"/>
+<path d="M500,481 L520,481 L520,710 L560,710" fill="none" stroke="#ff5d6c" stroke-width="2.2" stroke-dasharray="6 5" marker-end="url(#a-ff5d6c)"/>
+<path d="M674,410 L674,436" fill="none" stroke="#93a3b8" stroke-width="2.2" marker-end="url(#a-93a3b8)"/>
+<path d="M926,410 L926,436" fill="none" stroke="#93a3b8" stroke-width="2.2" marker-end="url(#a-93a3b8)"/>
+<rect x="1110" y="196" width="442" height="96" rx="12" fill="#111821" stroke="#b48cff" stroke-width="2"/>
+<rect x="1110" y="208" width="6" height="72" rx="3" fill="#b48cff"/>
+<text x="1134" y="227" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">Hypotheses</text>
+<text x="1536" y="223" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#b48cff" text-anchor="end" letter-spacing="1.2">AI</text>
+<text x="1134" y="252" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">Every (service x fault) that could exist: between</text>
+<text x="1134" y="273" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">13 and 26 per incident.</text>
+<rect x="1110" y="310" width="442" height="96" rx="12" fill="#111821" stroke="#b48cff" stroke-width="2"/>
+<rect x="1110" y="322" width="6" height="72" rx="3" fill="#b48cff"/>
+<text x="1134" y="341" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">Predict</text>
+<text x="1536" y="337" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#b48cff" text-anchor="end" letter-spacing="1.2">AI</text>
+<text x="1134" y="366" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">What would each hypothesis look like on every</text>
+<text x="1134" y="387" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">dashboard? Looked up in the symptom table.</text>
+<rect x="1110" y="424" width="442" height="96" rx="12" fill="#111821" stroke="#b48cff" stroke-width="2"/>
+<rect x="1110" y="436" width="6" height="72" rx="3" fill="#b48cff"/>
+<text x="1134" y="455" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">Update beliefs</text>
+<text x="1536" y="451" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#b48cff" text-anchor="end" letter-spacing="1.2">AI</text>
+<text x="1134" y="480" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">Bayes' rule on what it just saw. Never certain: it</text>
+<text x="1134" y="501" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">assumes dashboards can mislead.</text>
+<rect x="1110" y="538" width="442" height="96" rx="12" fill="#111821" stroke="#b48cff" stroke-width="2"/>
+<rect x="1110" y="550" width="6" height="72" rx="3" fill="#b48cff"/>
+<text x="1134" y="569" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">Choose the next probe</text>
+<text x="1536" y="565" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#b48cff" text-anchor="end" letter-spacing="1.2">AI</text>
+<text x="1134" y="594" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">The dashboard with the highest expected</text>
+<text x="1134" y="615" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">information gain per second of cost.</text>
+<rect x="1110" y="652" width="442" height="96" rx="12" fill="#111821" stroke="#b48cff" stroke-width="2"/>
+<rect x="1110" y="664" width="6" height="72" rx="3" fill="#b48cff"/>
+<text x="1134" y="683" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="650" fill="#d8e0ea" text-anchor="start">Declare when confident</text>
+<text x="1536" y="679" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="11" font-weight="400" fill="#b48cff" text-anchor="end" letter-spacing="1.2">AI</text>
+<text x="1134" y="708" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">Above a confidence threshold. A wrong guess costs</text>
+<text x="1134" y="729" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">+20 s, then +40 s, +60 s...</text>
+<path d="M1331,292 L1331,310" fill="none" stroke="#b48cff" stroke-width="2.2" marker-end="url(#a-b48cff)"/>
+<path d="M1331,406 L1331,424" fill="none" stroke="#b48cff" stroke-width="2.2" marker-end="url(#a-b48cff)"/>
+<path d="M1331,520 L1331,538" fill="none" stroke="#b48cff" stroke-width="2.2" marker-end="url(#a-b48cff)"/>
+<path d="M1331,634 L1331,652" fill="none" stroke="#b48cff" stroke-width="2.2" marker-end="url(#a-b48cff)"/>
+<path d="M1552,700 C1590,700 1590,472 1552,472" fill="none" stroke="#b48cff" stroke-width="2.2" stroke-dasharray="6 5" marker-end="url(#a-b48cff)"/>
+<text x="1628" y="590" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#b48cff" text-anchor="end">repeat</text>
+<path d="M1040,454 L1110,454" fill="none" stroke="#b48cff" stroke-width="2.2" marker-end="url(#a-b48cff)"/>
+<text x="1075" y="442" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#b48cff" text-anchor="middle">sees</text>
+<path d="M1110,598 L1040,598" fill="none" stroke="#b48cff" stroke-width="2.2" marker-end="url(#a-b48cff)"/>
+<text x="1075" y="620" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#b48cff" text-anchor="middle">opens</text>
+<rect x="1110" y="766" width="442" height="142" rx="12" fill="#161227" stroke="#b48cff" stroke-width="2"/>
+<text x="1134" y="796" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="650" fill="#b48cff" text-anchor="start">What it is, honestly</text>
+<text x="1134" y="820" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#d8e0ea" text-anchor="start">A Bayesian diagnostic planner. It shares the symptom</text>
+<text x="1134" y="839" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#d8e0ea" text-anchor="start">table with the simulator, like a doctor who knows the</text>
+<text x="1134" y="858" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#d8e0ea" text-anchor="start">textbook but never saw this patient. Not an LLM, not</text>
+<text x="1134" y="877" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#d8e0ea" text-anchor="start">if/else rules, and it cannot discover new failure types</text>
+<text x="1134" y="896" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#d8e0ea" text-anchor="start">on its own.</text>
+<rect x="48" y="944" width="1504" height="130" rx="12" fill="#111821" stroke="#2b3b50" stroke-width="2"/>
+<text x="72" y="976" font-family="Consolas, 'SF Mono', 'Cascadia Code', monospace" font-size="17" font-weight="700" fill="#d8e0ea" text-anchor="start" letter-spacing="1.5">4  ADAPT</text>
+<text x="190" y="976" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#93a3b8" text-anchor="start">between matches only, never mid-race</text>
+<text x="72" y="1006" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">Your result nudges the AI's strength toward a target win rate for you: Easy 70%, Normal</text>
+<text x="72" y="1027" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">50%, Hard 30%. Strength sets how fast it thinks, how focused its probes are and how sure</text>
+<text x="72" y="1048" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">it must be.</text>
+<text x="840" y="1006" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">Your win record per fault type feeds Thompson sampling, so you see more of the</text>
+<text x="840" y="1027" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#d8e0ea" text-anchor="start">incidents you are weakest at. It tracks how well you do, not how you debug.</text>
+<line x1="810" y1="962" x2="810" y2="1056" stroke="#2b3b50" stroke-width="2"/>
+<path d="M48,1003 L24,1003 L24,245 L48,245" fill="none" stroke="#ffb84d" stroke-width="2.2" marker-end="url(#a-ffb84d)"/>
+<text x="38" y="924" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="13" fill="#ffb84d" transform="rotate(-90 38 924)">next incident</text>
+<text x="48" y="1100" font-family="'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#93a3b8" text-anchor="start">Source: src/sim generates incidents, src/ai reasons and adapts. Full explanation, limits and tests: HOW-IT-WORKS.md</text>
+</svg>

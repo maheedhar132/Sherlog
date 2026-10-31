@@ -1,10 +1,10 @@
 import { COST, WRONG_PENALTY } from '../sim/constants';
 import { FAULTS, FAULT_IDS } from '../sim/faults';
+import { Modal } from './Modal';
 
 export function FieldGuide({ onClose }: { onClose: () => void }) {
   return (
-    <div className="overlay" onClick={onClose}>
-      <div className="modal wide" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Field guide">
+    <Modal label="Field guide" className="wide" onClose={onClose}>
         <div className="modal-head">
           <h2>📘 Field guide</h2>
           <button onClick={onClose} aria-label="Close">
@@ -13,7 +13,7 @@ export function FieldGuide({ onClose }: { onClose: () => void }) {
         </div>
         <p className="hint">
           Query costs: metrics {COST.metrics}s · logs {COST.logs}s · traces {COST.traces}s · deploys {COST.deploys}s · wrong declare +
-          {WRONG_PENALTY}s
+          {WRONG_PENALTY}s, then +{WRONG_PENALTY * 2}s, +{WRONG_PENALTY * 3}s…
         </p>
         <div className="guide-grid">
           {FAULT_IDS.map((f) => {
@@ -32,7 +32,6 @@ export function FieldGuide({ onClose }: { onClose: () => void }) {
             );
           })}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

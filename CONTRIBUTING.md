@@ -30,6 +30,19 @@ Thanks for helping make on-call less scary. Sherlog is maintained by [@maheedhar
 - **Making the AI read hidden state.** It must only use the query API the player has. That's the whole point.
 - **Large dependencies** for small gains. The game ships about 65 KB of gzipped JavaScript.
 
+## Project layout
+
+```
+src/sim/      seeded topology, fault definitions, signal rendering, detection
+src/ai/       Bayesian investigator, adaptive difficulty, Thompson-sampling scenario picker
+src/game/     match setup, daily seed, streaks, share card
+src/ui/       React UI (service map, panels, postmortem, modals)
+tests/        vitest suite
+docs/         diagram, screenshots and the demo GIF used in the README
+```
+
+The AI must only use what a player can see: it is built from a `PlayerView` (`src/sim/detect.ts`), never from the incident's hidden truth. Please keep it that way; a test enforces it.
+
 ## Code style
 
 - TypeScript strict mode, functional React components, no state library.
