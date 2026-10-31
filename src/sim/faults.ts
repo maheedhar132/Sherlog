@@ -462,6 +462,32 @@ export const FAULTS: Record<FaultId, FaultDef> = {
       addFx(fx, s, 'traces', 'tr_self_slow');
     },
   },
+  deploy_retry_storm: {
+    id: 'deploy_retry_storm',
+    name: 'Bad deploy that triggers a retry storm',
+    short: 'A release starts failing, and its retries flatten a dependency',
+    targets: ['app'],
+    story: (s) =>
+      `A new version of ${s} shipped with a bug that made some calls fail, and its client retries failures immediately. The errors began with the deploy, and the retries then multiplied traffic onto its dependencies until they were overloaded too: two causes, one incident.`,
+    signals: [
+      'A deploy lands right before the alert, and the service itself throws errors (stack traces)',
+      'It also logs aggressive retries, and its traces repeat the same downstream call',
+      'Its dependencies are overloaded: request rate jumps and they shed load',
+    ],
+    tip: 'When the change log and the overloaded dependency both point somewhere, check whether one service explains both: roll back the change that started it.',
+    applies: (t, s) => t.byId[s].deps.some((d) => ['app', 'db'].includes(t.byId[d].kind)),
+    effects: (t, s, fx) => {
+      addFx(fx, s, 'metrics', 'err_up');
+      addFx(fx, s, 'logs', 'log_exception', 'log_retry');
+      addFx(fx, s, 'traces', 'tr_self_err', 'tr_fanout_retry');
+      fx.deploys.add(s);
+      for (const d of t.byId[s].deps) {
+        if (!['app', 'db'].includes(t.byId[d].kind)) continue;
+        addFx(fx, d, 'metrics', 'rps_up', 'cpu_up', 'lat_up', 'err_up');
+        addFx(fx, d, 'logs', 'log_overload');
+      }
+    },
+  },
 };
 
 export const FAULT_IDS = Object.keys(FAULTS) as FaultId[];

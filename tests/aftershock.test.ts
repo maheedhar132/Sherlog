@@ -31,3 +31,18 @@ describe('aftershock', () => {
     expect(rate).toBeLessThan(0.75);
   });
 });
+
+describe('a deploy that triggers a retry storm', () => {
+  it('is diagnosed correctly, not as either of its two parts', () => {
+    for (const mode of ['normal', 'hard'] as const) {
+      let right = 0;
+      const n = 30;
+      for (let seed = 1; seed <= n; seed++) {
+        const inc = generateIncident({ seed, mode, fault: 'deploy_retry_storm' });
+        const declared = simulateAi(inc, 0.8).actions.filter((a) => a.kind === 'declare');
+        if (declared.some((a) => a.hyp.fault === 'deploy_retry_storm' && a.hyp.service === inc.truth.service && a.correct)) right++;
+      }
+      expect(right / n, mode).toBeGreaterThan(0.85);
+    }
+  });
+});

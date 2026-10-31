@@ -72,6 +72,7 @@ export const FIX_FOR: Record<FaultId, { fix: FixId; why: string }> = {
   clock_skew: { fix: 'sync_clock', why: 'The node clock drifted, so tokens look like they come from the future. Resync it. A rollback changes nothing because the code never changed, and a restart does not fix the clock.' },
   lock_contention: { fix: 'cancel_migration', why: 'One migration holds a lock that every query waits on. Cancel it (and run it online later). Scaling out the callers only queues more requests behind the same lock.' },
   runaway_job: { fix: 'cap_job', why: 'A scheduled job is eating the capacity. Pause it and cap its concurrency. Scaling out chases the load, and a rollback changes nothing because nothing was deployed.' },
+  deploy_retry_storm: { fix: 'rollback', why: 'The release started it, so rolling it back stops both the errors and the retries. Shedding load or adding backoff treats the amplification while the bad code keeps failing.' },
   noisy_neighbour: { fix: 'move_node', why: 'CPU is saturated without extra traffic, so another workload on the node is taking it. Move to a different node. Scaling out onto the same node would not help.' },
 };
 
@@ -84,6 +85,7 @@ export const STOPGAP_FOR: Partial<Record<FaultId, { fix: FixId; why: string }>> 
   thread_pool: { fix: 'scale_out', why: 'New replicas help until their threads block on the same slow call.' },
   perf_regression: { fix: 'scale_out', why: 'More replicas hide the slowdown at a higher cost, and the regression is still there.' },
   rate_limited: { fix: 'circuit_breaker', why: 'A breaker stops the 429s, but it also stops the calls the vendor would have allowed.' },
+  deploy_retry_storm: { fix: 'circuit_breaker', why: 'A breaker calms the dependencies, but the new release is still failing, so errors keep coming.' },
   gc_pause: { fix: 'restart', why: 'A restart clears the heap, so latency drops for a minute, then the heap fills again and the pauses return.' },
   lock_contention: { fix: 'scale_out', why: 'More callers do not help: they only queue behind the same lock, though a few get lucky for a moment.' },
   runaway_job: { fix: 'scale_out', why: 'More replicas absorb some of the job load for a while, but the job still takes everything it is given.' },
