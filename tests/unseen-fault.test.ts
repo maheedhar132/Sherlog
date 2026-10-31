@@ -6,10 +6,11 @@ import { generateIncident } from '../src/sim/incident';
 import type { FaultId } from '../src/sim/types';
 
 /**
- * Proof the AI is not a rulebook: register a fault type at runtime that no AI code mentions,
- * describe only its symptoms, and the same investigator diagnoses it.
+ * Adding a fault needs no AI code changes: register a new fault type at runtime, describe only its symptoms,
+ * and the same investigator can diagnose it. The AI is handed the symptom table (like any fault it knows);
+ * what is tested is the reasoning over it, including that the new signature overlaps existing ones.
  */
-describe('a fault type the AI was never written for', () => {
+describe('a new, data-driven fault type (no AI code changes)', () => {
   const id = 'thread_pool_exhaustion' as FaultId;
   const def: FaultDef = {
     id,
@@ -32,7 +33,7 @@ describe('a fault type the AI was never written for', () => {
     FAULT_IDS.splice(FAULT_IDS.indexOf(id), 1);
   });
 
-  it('is diagnosed correctly without changing any AI code', () => {
+  it('is diagnosed, and usually on the first declaration', () => {
     let firstTry = 0;
     const n = 60;
     for (let seed = 0; seed < n; seed++) {

@@ -1,11 +1,25 @@
 import { useState } from 'react';
 import { weakestFault, type Profile } from '../ai/adapter';
 import { fmt, shareText, type MatchResult, type MatchSetup } from '../game/session';
-import { WRONG_PENALTY } from '../sim/constants';
 import { detectLogs, observe } from '../sim/detect';
 import { FAULTS } from '../sim/faults';
 import type { Channel, QueryKey } from '../sim/types';
+import type { Suspect } from '../ai/investigator';
 import { CHANNEL_ICON, FEATURE_LABEL, describeQuery } from './labels';
+
+/** The AI's leading hypotheses and its belief in each. */
+function Suspects({ list }: { list: Suspect[] }) {
+  const shown = list.filter((s) => s.p >= 0.01);
+  return (
+    <div className="suspects">
+      {shown.map((s, i) => (
+        <span key={i} className={i === 0 ? 'lead' : ''}>
+          {FAULTS[s.hyp.fault].name} @ {s.hyp.service} {Math.round(s.p * 100)}%
+        </span>
+      ))}
+    </div>
+  );
+}
 
 interface Props {
   setup: MatchSetup;
@@ -87,7 +101,7 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
               <li key={i} className={a.kind === 'declare' ? (a.correct ? 'good' : 'bad') : isKey(a.key!) ? 'key' : ''}>
                 <time>{fmt(a.clock)}</time>
                 {a.kind === 'declare'
-                  ? `${a.correct ? '✓' : '✗'} declared ${FAULTS[a.hyp!.fault].name} @ ${a.hyp!.service}${a.correct ? '' : ` (+${WRONG_PENALTY}s)`}`
+                  ? `${a.correct ? '✓' : '✗'} declared ${FAULTS[a.hyp!.fault].name} @ ${a.hyp!.service}${a.correct ? '' : ` (+${a.cost}s)`}`
                   : `${CHANNEL_ICON[describeQuery(a.key!).channel]} ${a.key}${isKey(a.key!) ? ' ⭐' : ''}`}
               </li>
             ))}
@@ -95,19 +109,26 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
           </ol>
         </section>
         <section className="card">
-          <h3>AI investigation</h3>
+          <h3>AI investigation: its reasoning</h3>
           <ol className="timeline">
+            <li>
+              <time>0:00</time>🔔 reads the paging alerts
+              <Suspects list={ai.prior} />
+            </li>
             {ai.actions.map((a, i) => (
               <li key={i} className={a.kind === 'declare' ? (a.correct ? 'good' : 'bad') : isKey(a.key) ? 'key' : ''}>
                 <time>{fmt(a.wall + ai.actions.slice(0, i).reduce((sum, x) => sum + x.cost, 0))}</time>
                 {a.kind === 'declare'
                   ? `${a.correct ? '✓' : '✗'} declared ${FAULTS[a.hyp.fault].name} @ ${a.hyp.service} (${Math.round(a.confidence * 100)}% sure)`
-                  : `${CHANNEL_ICON[describeQuery(a.key).channel]} ${a.key}${isKey(a.key) ? ' ⭐' : ''}  → ${Math.round(a.confidence * 100)}% sure`}
+                  : `${CHANNEL_ICON[describeQuery(a.key).channel]} ${a.key}${isKey(a.key) ? ' ⭐' : ''}`}
+                <Suspects list={a.suspects} />
               </li>
             ))}
           </ol>
           <p className="hint">
-            The AI picks the query with the most expected information per second it costs, and declares once it's confident enough.
+            After every step the AI re-weighs all of its hypotheses, then opens the dashboard that should shrink its uncertainty most per
+            second it costs. That is not always its top suspect: a probe that splits many hypotheses at once can be worth more. It sees only
+            what you see.
           </p>
         </section>
       </div>

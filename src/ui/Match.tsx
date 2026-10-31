@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { aiStateAt } from '../ai/investigator';
 import { fmt, type MatchResult, type MatchSetup, type PlayerAction } from '../game/session';
-import { COST, WRONG_PENALTY } from '../sim/constants';
+import { COST, WRONG_PENALTY, wrongPenalty } from '../sim/constants';
 import { detectAlerts, detectMetrics } from '../sim/detect';
 import { FAULTS, FAULT_IDS, isCompatible } from '../sim/faults';
 import { queryCost, sameHypothesis } from '../sim/incident';
 import type { FaultId, QueryKey } from '../sim/types';
 import { CHANNEL_ICON, KIND_LABEL, describeQuery } from './labels';
 import { DeploysPanel, LogsPanel, MetricsPanel, TracePanel } from './Panels';
+import { Modal } from './Modal';
 import { ServiceMap } from './ServiceMap';
 
 type Tab = 'metrics' | 'logs' | 'traces' | 'deploys';
@@ -36,18 +37,13 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
   const [mapExpanded, setMapExpanded] = useState(false);
 
   useEffect(() => {
-    if (!mapExpanded) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMapExpanded(false);
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [mapExpanded]);
-
-  useEffect(() => {
     const id = setInterval(() => setWall((performance.now() - startRef.current) / 1000), 200);
     return () => clearInterval(id);
   }, []);
 
   const clock = wall + extra;
+  const misses = actions.filter((a) => a.kind === 'declare' && !a.correct).length;
+  const nextPenalty = wrongPenalty(misses + 1);
   const aiNow = aiStateAt(ai, wall);
   const alerts = useMemo(() => detectAlerts(incident), [incident]);
   const pageSummary = useMemo(
@@ -98,12 +94,13 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
   const declare = () => {
     const hyp = { service: declService, fault: declFault };
     const correct = sameHypothesis(hyp, incident.truth);
-    const action: PlayerAction = { kind: 'declare', hyp, correct, clock, cost: correct ? 0 : WRONG_PENALTY };
+    const penalty = correct ? 0 : nextPenalty;
+    const action: PlayerAction = { kind: 'declare', hyp, correct, clock, cost: penalty };
     const all = [...actions, action];
     setActions(all);
     if (!correct) {
-      setExtra((e) => e + WRONG_PENALTY);
-      setToast(`✗ Not it: ${FAULTS[declFault].name} on ${declService}. +${WRONG_PENALTY}s`);
+      setExtra((e) => e + penalty);
+      setToast(`✗ Not it: ${FAULTS[declFault].name} on ${declService}. +${penalty}s`);
       return;
     }
     const won = phase === 'running' && clock < ai.mttr;
@@ -176,7 +173,10 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
             <button className="primary" onClick={declare} disabled={!validFaults(declService).includes(declFault)}>
               Declare
             </button>
-            <p className="hint">Wrong answer = +{WRONG_PENALTY}s. Name the cause, not the victim.</p>
+            <p className="hint">
+              {misses === 0 ? `Wrong answer: +${WRONG_PENALTY}s, and each miss costs ${WRONG_PENALTY}s more.` : `Next wrong answer: +${nextPenalty}s.`} Name the cause,
+              not the victim.
+            </p>
           </section>
         </aside>
 
@@ -227,7 +227,7 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
                 if (a.kind === 'declare')
                   return (
                     <li key={i} className={a.correct ? 'good' : 'bad'}>
-                      {a.correct ? `✓ resolved · MTTR ${fmt(ai.mttr)}` : `✗ wrong guess (+${WRONG_PENALTY}s)`}
+                      {a.correct ? `✓ resolved · MTTR ${fmt(ai.mttr)}` : `✗ wrong guess (+${a.cost}s)`}
                     </li>
                   );
                 const q = describeQuery(a.key);
@@ -265,49 +265,45 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
       {toast && <div className="toast">{toast}</div>}
 
       {mapExpanded && (
-        <div className="overlay" onClick={() => setMapExpanded(false)}>
-          <div className="modal map-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Service map">
-            <div className="modal-head">
-              <h2>Service map</h2>
-              <button onClick={() => setMapExpanded(false)} aria-label="Close">
-                ✕
-              </button>
-            </div>
-            <ServiceMap
-              topology={t}
-              alerts={alerts}
-              selected={selected}
-              queried={queried}
-              expanded
-              onSelect={(id) => {
-                select(id);
-                setMapExpanded(false);
-              }}
-            />
-            <p className="hint">
-              Red = paging. Arrows point from caller to dependency. Click a service to inspect it. Letters show what you pulled
-              (M = metrics, L = logs, T = traces). Esc to close.
-            </p>
+        <Modal label="Service map" className="map-modal" onClose={() => setMapExpanded(false)}>
+          <div className="modal-head">
+            <h2>Service map</h2>
+            <button onClick={() => setMapExpanded(false)} aria-label="Close">
+              ✕
+            </button>
           </div>
-        </div>
+          <ServiceMap
+            topology={t}
+            alerts={alerts}
+            selected={selected}
+            queried={queried}
+            expanded
+            onSelect={(id) => {
+              select(id);
+              setMapExpanded(false);
+            }}
+          />
+          <p className="hint">
+            Red = paging. Arrows point from caller to dependency. Click a service to inspect it. Letters show what you pulled (M =
+            metrics, L = logs, T = traces). Esc to close.
+          </p>
+        </Modal>
       )}
 
       {phase === 'lost' && (
-        <div className="overlay">
-          <div className="modal">
-            <h2>🤖 The AI resolved it first</h2>
-            <p>
-              AI MTTR <b>{fmt(ai.mttr)}</b>, and your clock is already past that. You can keep investigating unranked, or go
-              straight to the postmortem.
-            </p>
-            <div className="row-buttons">
-              <button className="primary" onClick={() => setPhase('practice')}>
-                Keep investigating
-              </button>
-              <button onClick={giveUp}>Show postmortem</button>
-            </div>
+        <Modal label="The AI resolved it first" onClose={() => setPhase('practice')}>
+          <h2>🤖 The AI resolved it first</h2>
+          <p>
+            AI MTTR <b>{fmt(ai.mttr)}</b>, and your clock is already past that. You can keep investigating unranked, or go straight to
+            the postmortem.
+          </p>
+          <div className="row-buttons">
+            <button className="primary" onClick={() => setPhase('practice')}>
+              Keep investigating
+            </button>
+            <button onClick={giveUp}>Show postmortem</button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

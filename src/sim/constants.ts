@@ -14,6 +14,9 @@ export const COST: Record<Channel | 'deploys', number> = {
 
 export const WRONG_PENALTY = 20;
 
+/** The nth wrong declaration costs n times the base penalty (20s, 40s, 60s...), so blind guessing gets expensive fast. */
+export const wrongPenalty = (nthWrong: number) => WRONG_PENALTY * nthWrong;
+
 export const METRIC_FEATURES = ['lat_up', 'err_up', 'cpu_up', 'mem_climb', 'restarts', 'rps_up', 'rps_drop', 'hit_drop', 'conn_max', 'nodata'] as const;
 export const LOG_FEATURES = [
   'log_oom',

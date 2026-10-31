@@ -1,6 +1,6 @@
 import { mulberry32, type Rng } from '../lib/rng';
-import { WRONG_PENALTY } from '../sim/constants';
-import { detectAlerts, observe, pagingServices } from '../sim/detect';
+import { wrongPenalty } from '../sim/constants';
+import { pagingServices, playerView, type PlayerView } from '../sim/detect';
 import { faultEffects } from '../sim/effects';
 import { hypotheses, queryCost, queryKeys, sameHypothesis } from '../sim/incident';
 import type { Fx, Hypothesis, Incident, QueryKey } from '../sim/types';
@@ -10,7 +10,7 @@ import type { Fx, Hypothesis, Incident, QueryKey } from '../sim/types';
  *
  * It holds a probability for every (service, fault) hypothesis, picks the query with the best
  * expected information gain per second of cost, and declares once it is confident enough.
- * It reads the same dashboards as the player through `observe`; it never sees `incident.truth`.
+ * It is constructed from a PlayerView (service map, alerts, dashboards), so it cannot read `incident.truth`.
  */
 
 const MISS = 0.1; // P(symptom not seen | hypothesis predicts it)
@@ -87,13 +87,13 @@ export class Investigator {
   private readonly allKeys: QueryKey[];
   private readonly paging: string[];
 
-  constructor(private readonly inc: Incident) {
-    this.hyps = hypotheses(inc.topology);
-    this.fxs = this.hyps.map((h) => faultEffects(inc.topology, h));
+  constructor(private readonly view: PlayerView) {
+    this.hyps = hypotheses(view.topology);
+    this.fxs = this.hyps.map((h) => faultEffects(view.topology, h));
     this.logp = this.hyps.map(() => 0);
-    this.allKeys = queryKeys(inc.topology);
-    this.paging = pagingServices(inc.topology);
-    this.update('alerts', detectAlerts(inc));
+    this.allKeys = queryKeys(view.topology);
+    this.paging = pagingServices(view.topology);
+    this.update('alerts', view.alerts);
   }
 
   posterior(): number[] {
@@ -105,6 +105,15 @@ export class Investigator {
     let i = 0;
     for (let j = 1; j < p.length; j++) if (p[j] > p[i]) i = j;
     return { hyp: this.hyps[i], p: p[i] };
+  }
+
+  /** The leading hypotheses and how likely the AI thinks each is right now. */
+  suspects(n = 3): Suspect[] {
+    const p = this.posterior();
+    return this.hyps
+      .map((hyp, i) => ({ hyp, p: p[i] }))
+      .sort((a, b) => b.p - a.p)
+      .slice(0, n);
   }
 
   remaining(): QueryKey[] {
@@ -150,18 +159,26 @@ export class Investigator {
   }
 
   observe(key: QueryKey): Set<string> {
-    const obs = observe(this.inc, key);
+    const obs = this.view.observe(key);
     this.update(key, obs);
     return obs;
   }
 }
 
+export interface Suspect {
+  hyp: Hypothesis;
+  p: number;
+}
+
+/** `suspects` is the AI's top three hypotheses right after the action, so the postmortem can show why it looked where it did. */
 export type AiAction =
-  | { kind: 'query'; key: QueryKey; wall: number; cost: number; confidence: number }
-  | { kind: 'declare'; hyp: Hypothesis; correct: boolean; wall: number; cost: number; confidence: number };
+  | { kind: 'query'; key: QueryKey; wall: number; cost: number; confidence: number; suspects: Suspect[] }
+  | { kind: 'declare'; hyp: Hypothesis; correct: boolean; wall: number; cost: number; confidence: number; suspects: Suspect[] };
 
 export interface AiRun {
   strength: number;
+  /** The AI's leading suspects after reading only the paging alerts, before it opens any dashboard. */
+  prior: Suspect[];
   actions: AiAction[];
   /** Real seconds after the start at which the AI solves it. */
   wallEnd: number;
@@ -170,16 +187,19 @@ export interface AiRun {
 }
 
 /**
- * The AI never depends on what the player does, so its whole race is simulated up front and
- * replayed against the wall clock. That keeps it deterministic and lets the postmortem show every step.
+ * The AI never reacts to what the player does, so its whole run is simulated up front and replayed
+ * against the wall clock. That keeps it deterministic and lets the postmortem show every step.
+ * `inc.truth` is used only here, as the referee that marks a declaration right or wrong.
  */
 export function simulateAi(inc: Incident, strength: number, seed = inc.seed): AiRun {
   const params = aiParams(strength);
   const rng = mulberry32((seed ^ 0x9e3779b9) >>> 0);
-  const ai = new Investigator(inc);
+  const ai = new Investigator(playerView(inc));
+  const prior = ai.suspects();
   const actions: AiAction[] = [];
   let wall = 0;
   let extra = 0;
+  let wrongs = 0;
   const think = () => params.thinkSeconds * (0.7 + 0.6 * rng());
 
   for (let step = 0; step < 80; step++) {
@@ -187,11 +207,11 @@ export function simulateAi(inc: Incident, strength: number, seed = inc.seed): Ai
     if (p >= params.threshold || ai.remaining().length === 0) {
       wall += think() * 0.5;
       const correct = sameHypothesis(hyp, inc.truth);
-      const cost = correct ? 0 : WRONG_PENALTY;
+      const cost = correct ? 0 : wrongPenalty(++wrongs);
       extra += cost;
-      actions.push({ kind: 'declare', hyp, correct, wall, cost, confidence: p });
+      if (!correct) ai.eliminate(hyp);
+      actions.push({ kind: 'declare', hyp, correct, wall, cost, confidence: p, suspects: ai.suspects() });
       if (correct) break;
-      ai.eliminate(hyp);
       continue;
     }
     const key = ai.chooseQuery(params, rng);
@@ -199,9 +219,9 @@ export function simulateAi(inc: Incident, strength: number, seed = inc.seed): Ai
     const cost = queryCost(key);
     extra += cost;
     ai.observe(key);
-    actions.push({ kind: 'query', key, wall, cost, confidence: ai.best().p });
+    actions.push({ kind: 'query', key, wall, cost, confidence: ai.best().p, suspects: ai.suspects() });
   }
-  return { strength, actions, wallEnd: wall, mttr: wall + extra };
+  return { strength, prior, actions, wallEnd: wall, mttr: wall + extra };
 }
 
 /** What the AI has done by `wall` seconds, and its clock at that moment. */

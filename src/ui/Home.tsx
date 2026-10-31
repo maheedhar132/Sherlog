@@ -41,9 +41,9 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
         </h1>
         <p className="tagline">
           Production is on fire. You and an AI investigator get the same dashboards: metrics, logs, traces, deploys. Every query costs
-          time. First to name the root cause wins. <b>The AI learns how you debug</b> and adapts, so every incident stays a fight.
+          time. First to name the root cause wins. <b>The AI adapts to how well you do</b> and serves more of the incidents you're weakest at, so every one stays a fight.
         </p>
-        <p className="sub">100% free and offline · runs in your browser · no account, no API keys, no tracking</p>
+        <p className="sub">free · runs entirely in your browser · no server, no account, no API keys, no tracking</p>
       </section>
 
       {placement && (
@@ -93,7 +93,7 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
               plus query costs.
             </li>
             <li>
-              <b>Declare</b> the service and fault. A wrong answer adds 20s.
+              <b>Declare</b> the service and fault. A wrong answer adds 20s, and each further miss costs 20s more, so guessing doesn't pay.
             </li>
             <li>The <b>postmortem</b> replays your path next to the AI's, so you see exactly where it was smarter.</li>
           </ol>

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_STRENGTH, TARGET_WIN_RATE, nextStrength, newProfile, pickFault, recordMatch } from '../src/ai/adapter';
-import { simulateAi } from '../src/ai/investigator';
-import { mulberry32 } from '../src/lib/rng';
+import { simulateAi, type AiRun } from '../src/ai/investigator';
+import { mulberry32, shuffle } from '../src/lib/rng';
+import { wrongPenalty } from '../src/sim/constants';
 import { FAULT_IDS } from '../src/sim/faults';
-import { generateIncident } from '../src/sim/incident';
+import { generateIncident, hypotheses, sameHypothesis } from '../src/sim/incident';
 import type { Mode } from '../src/sim/types';
 
 describe('AI investigator', () => {
@@ -77,4 +78,72 @@ describe('adaptation', () => {
     const share = picks.filter((f) => f === 'retry_storm').length / picks.length;
     expect(share).toBeGreaterThan(0.6);
   });
+});
+
+describe('what the AI is allowed to know', () => {
+  // The first steps of a run: every query, up to and including the first declaration.
+  const trail = (r: AiRun) => {
+    const out: string[] = [];
+    for (const a of r.actions) {
+      out.push(a.kind === 'query' ? a.key : `${a.hyp.fault}@${a.hyp.service}`);
+      if (a.kind === 'declare') break;
+    }
+    return out;
+  };
+
+  it('behaves identically whatever the hidden answer is, until a declaration is judged', () => {
+    for (let seed = 0; seed < 40; seed++) {
+      const inc = generateIncident({ seed, mode: 'hard', fault: FAULT_IDS[seed % FAULT_IDS.length] });
+      const decoy = hypotheses(inc.topology).find((h) => !sameHypothesis(h, inc.truth))!;
+      // Swap the hidden answer and wipe the simulator's own symptom bookkeeping: only the rendered dashboards remain.
+      const tampered = { ...inc, truth: decoy, fx: { services: {}, deploys: new Set<string>() }, herrings: [] };
+      expect(trail(simulateAi(tampered, 0.7)), `seed ${seed}`).toEqual(trail(simulateAi(inc, 0.7)));
+    }
+  });
+
+  it('records sensible reasoning: sorted suspects whose leader is what it declares', () => {
+    for (let seed = 0; seed < 40; seed++) {
+      const run = simulateAi(generateIncident({ seed, mode: 'normal' }), 0.7);
+      expect(run.prior.length).toBe(3);
+      for (const a of run.actions) {
+        const p = a.suspects.map((s) => s.p);
+        expect([...p].sort((x, y) => y - x)).toEqual(p);
+        expect(p[0]).toBeLessThanOrEqual(1);
+      }
+      const last = run.actions[run.actions.length - 1];
+      if (last.kind === 'declare' && last.correct) expect(last.suspects[0].hyp).toEqual(last.hyp);
+    }
+  });
+});
+
+describe('guessing does not pay', () => {
+  it('charges 20s, 40s, 60s... for successive wrong declarations, for the AI too', () => {
+    expect([1, 2, 3].map(wrongPenalty)).toEqual([20, 40, 60]);
+    // The AI rarely guesses wrong, so look across many incidents for real wrong declarations.
+    let found = 0;
+    for (let seed = 0; seed < 900; seed++) {
+      const run = simulateAi(generateIncident({ seed, mode: 'hard' }), DEFAULT_STRENGTH.easy);
+      const wrongCosts = run.actions.filter((a) => a.kind === 'declare' && !a.correct).map((a) => a.cost);
+      expect(wrongCosts, `seed ${seed}`).toEqual(wrongCosts.map((_, i) => 20 * (i + 1)));
+      found += wrongCosts.length;
+      if (found >= 3) break;
+    }
+    expect(found).toBeGreaterThan(0);
+  }, 30_000);
+
+  it('keeps a player who never opens a dashboard from beating the Normal AI most of the time', () => {
+    const rng = mulberry32(99);
+    let wins = 0;
+    const n = 300;
+    for (let seed = 0; seed < n; seed++) {
+      const inc = generateIncident({ seed, mode: 'normal' });
+      const order = shuffle(rng, hypotheses(inc.topology));
+      const k = order.findIndex((h) => sameHypothesis(h, inc.truth));
+      // 4.5s of clicking per guess, plus the escalating penalty for each miss.
+      let clock = 0;
+      for (let i = 0; i <= k; i++) clock += 4.5 + (i < k ? wrongPenalty(i + 1) : 0);
+      if (clock < simulateAi(inc, DEFAULT_STRENGTH.normal).mttr) wins++;
+    }
+    expect(wins / n).toBeLessThan(0.3);
+  }, 30_000);
 });
