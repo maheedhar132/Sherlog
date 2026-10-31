@@ -30,9 +30,17 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
   const [tab, setTab] = useState<Tab>('metrics');
   const [phase, setPhase] = useState<'running' | 'lost' | 'practice'>('running');
   const [declService, setDeclService] = useState(t.services[0].id);
+  // Starts on the gateway, where no fault originates, so Declare stays disabled until a service is picked.
   const [declFault, setDeclFault] = useState<FaultId>(FAULT_IDS[0]);
-  // The first service is always the gateway, where no fault originates; picking a service fixes this.
   const [toast, setToast] = useState<string | null>(null);
+  const [mapExpanded, setMapExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!mapExpanded) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMapExpanded(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mapExpanded]);
 
   useEffect(() => {
     const id = setInterval(() => setWall((performance.now() - startRef.current) / 1000), 200);
@@ -133,7 +141,12 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
       <div className="match-grid">
         <aside className="col-left">
           <section className="card">
-            <h3>Service map</h3>
+            <div className="card-head">
+              <h3>Service map</h3>
+              <button className="icon-btn" onClick={() => setMapExpanded(true)} aria-label="Expand service map" title="Expand service map">
+                ⤢ Expand
+              </button>
+            </div>
             <ServiceMap topology={t} alerts={alerts} selected={selected} queried={queried} onSelect={select} />
             <p className="hint">Red = paging. Click a service to investigate it. Letters show what you pulled (M/L/T).</p>
           </section>
@@ -250,6 +263,34 @@ export function Match({ setup, onFinish, onOpenGuide }: Props) {
       </div>
 
       {toast && <div className="toast">{toast}</div>}
+
+      {mapExpanded && (
+        <div className="overlay" onClick={() => setMapExpanded(false)}>
+          <div className="modal map-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Service map">
+            <div className="modal-head">
+              <h2>Service map</h2>
+              <button onClick={() => setMapExpanded(false)} aria-label="Close">
+                ✕
+              </button>
+            </div>
+            <ServiceMap
+              topology={t}
+              alerts={alerts}
+              selected={selected}
+              queried={queried}
+              expanded
+              onSelect={(id) => {
+                select(id);
+                setMapExpanded(false);
+              }}
+            />
+            <p className="hint">
+              Red = paging. Arrows point from caller to dependency. Click a service to inspect it. Letters show what you pulled
+              (M = metrics, L = logs, T = traces). Esc to close.
+            </p>
+          </div>
+        </div>
+      )}
 
       {phase === 'lost' && (
         <div className="overlay">

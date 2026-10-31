@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/maheedhar132/Sherlog/security/advisories/new
+    about: Report security issues privately, not as public issues.
+  - name: Questions and ideas
+    url: https://github.com/maheedhar132/Sherlog/discussions
+    about: Ask questions and share strategies in Discussions.

@@ -7,6 +7,12 @@
 <!-- After the first Vercel deploy, replace this line with: [▶ Play in your browser](https://<your-project>.vercel.app) -->
 free · offline · no account · no API keys
 
+[![CI](https://github.com/maheedhar132/Sherlog/actions/workflows/ci.yml/badge.svg)](https://github.com/maheedhar132/Sherlog/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+![Sherlog: race an AI to the root cause](docs/social-preview.png)
+
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmaheedhar132%2FSherlog)
 
 <!-- Record a 15s GIF of one match and drop it here: it's the single biggest driver of stars. -->
@@ -28,6 +34,18 @@ Then the postmortem replays your investigation next to the AI's, so you see exac
   1. nudges the AI's strength toward your mode's target win rate (Easy ~70%, Normal ~50%, Hard ~30% for you), and
   2. uses **Thompson sampling** over your per-fault-type record to serve more of the incidents you're weakest at.
 - **$0, forever.** No LLM, no server, no download. The "AI" is a few hundred lines of Bayesian inference that runs in your tab in milliseconds.
+
+## How it compares
+
+There are other good incident-training games, mostly scripted scenarios or guided simulators. Sherlog's angle is different:
+
+| | Scripted scenario games | Sherlog |
+|---|---|---|
+| Incidents | Hand-written, finite | Generated from a seed: endless, plus a shared daily |
+| Opponent | None, or a timer | An AI that reasons over the same evidence as you |
+| Difficulty | Fixed levels | Adapts to your win rate and targets your weak spots |
+| Feedback | Right or wrong | Postmortem replay of your path vs the AI's |
+| Cost | Varies | Free, offline, no account, no LLM bills |
 
 ## How the AI works
 
@@ -88,7 +106,11 @@ tests/        vitest suite
 
 ## Contributing
 
+Contributions go through pull requests: fork, branch, PR. `main` is protected, CI must pass and every PR is reviewed, and each PR gets a Vercel preview so reviewers can play your change. Read **[CONTRIBUTING.md](CONTRIBUTING.md)** first.
+
 The best contributions are **new fault types**. Each one is a single entry in `src/sim/faults.ts`: which services it can hit, its symptoms per channel, and the story and tips for the postmortem. The test suite automatically checks that your fault renders, gets detected and gets solved. Ideas: certificate expiry, disk full, clock skew, noisy neighbour, thread-pool exhaustion, a bad feature flag, a Kafka consumer lag spiral.
+
+Releases follow [semantic versioning](https://semver.org/). See the [CHANGELOG](CHANGELOG.md).
 
 ## Roadmap
 

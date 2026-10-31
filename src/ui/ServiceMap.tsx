@@ -1,13 +1,25 @@
 import { useMemo } from 'react';
 import { depths } from '../sim/topology';
-import type { QueryKey, Topology } from '../sim/types';
+import type { QueryKey, ServiceKind, Topology } from '../sim/types';
 import { KIND_LABEL } from './labels';
 
-const W = 132;
-const H = 40;
-const GAP_X = 44;
-const GAP_Y = 14;
 const PAD = 10;
+
+/** Compact fits the sidebar; expanded has room for full names and larger text. */
+const SIZES = {
+  compact: { w: 132, h: 40, gapX: 44, gapY: 14, maxChars: 17 },
+  expanded: { w: 190, h: 52, gapX: 70, gapY: 22, maxChars: 40 },
+};
+
+const KIND_LONG: Record<ServiceKind, string> = {
+  gateway: 'gateway',
+  app: 'service',
+  db: 'database',
+  cache: 'cache',
+  queue: 'queue',
+  worker: 'worker',
+  external: 'third-party API',
+};
 
 interface Props {
   topology: Topology;
@@ -15,22 +27,42 @@ interface Props {
   selected: string;
   queried: Set<QueryKey>;
   onSelect: (id: string) => void;
+  expanded?: boolean;
 }
 
-export function ServiceMap({ topology, alerts, selected, queried, onSelect }: Props) {
+export function ServiceMap({ topology, alerts, selected, queried, onSelect, expanded = false }: Props) {
+  const size = expanded ? SIZES.expanded : SIZES.compact;
+  const { w: W, h: H, gapX, gapY } = size;
+
   const layout = useMemo(() => {
     const d = depths(topology);
     const cols: string[][] = [];
     for (const s of topology.services) (cols[d[s.id]] ??= []).push(s.id);
     const pos: Record<string, { x: number; y: number }> = {};
-    cols.forEach((col, c) => col.forEach((id, r) => (pos[id] = { x: PAD + c * (W + GAP_X), y: PAD + r * (H + GAP_Y) })));
-    const width = PAD * 2 + cols.length * W + (cols.length - 1) * GAP_X;
-    const height = PAD * 2 + Math.max(...cols.map((c) => c.length)) * (H + GAP_Y) - GAP_Y;
+    cols.forEach((col, c) => col.forEach((id, r) => (pos[id] = { x: PAD + c * (W + gapX), y: PAD + r * (H + gapY) })));
+    const width = PAD * 2 + cols.length * W + (cols.length - 1) * gapX;
+    const height = PAD * 2 + Math.max(...cols.map((c) => c.length)) * (H + gapY) - gapY;
     return { pos, width, height };
-  }, [topology]);
+  }, [topology, W, H, gapX, gapY]);
 
-  return (
-    <svg className="service-map" viewBox={`0 0 ${layout.width} ${layout.height}`} role="img" aria-label="Service dependency map">
+  const markerId = expanded ? 'arrow-x' : 'arrow-c';
+
+  const svg = (
+    <svg
+      className={`service-map ${expanded ? 'expanded' : ''}`}
+      viewBox={`0 0 ${layout.width} ${layout.height}`}
+      // Expanded renders at natural size and scrolls, so text stays readable on small screens.
+      style={expanded ? { width: layout.width, maxWidth: 'none' } : undefined}
+      role="img"
+      aria-label="Service dependency map"
+    >
+      {expanded && (
+        <defs>
+          <marker id={markerId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" className="arrow" />
+          </marker>
+        </defs>
+      )}
       {topology.services.flatMap((s) =>
         s.deps.map((d) => {
           const a = layout.pos[s.id];
@@ -40,13 +72,21 @@ export function ServiceMap({ topology, alerts, selected, queried, onSelect }: Pr
           const x2 = b.x;
           const y2 = b.y + H / 2;
           const mx = (x1 + x2) / 2;
-          return <path key={`${s.id}-${d}`} className="edge" d={`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`} />;
+          return (
+            <path
+              key={`${s.id}-${d}`}
+              className="edge"
+              d={`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`}
+              markerEnd={expanded ? `url(#${markerId})` : undefined}
+            />
+          );
         }),
       )}
       {topology.services.map((s) => {
         const p = layout.pos[s.id];
         const alerting = alerts.has(s.id);
         const seen = (['metrics', 'logs', 'traces'] as const).filter((c) => queried.has(`${c}:${s.id}`));
+        const name = s.id.length > size.maxChars ? `${s.id.slice(0, size.maxChars - 1)}…` : s.id;
         return (
           <g
             key={s.id}
@@ -54,22 +94,29 @@ export function ServiceMap({ topology, alerts, selected, queried, onSelect }: Pr
             transform={`translate(${p.x},${p.y})`}
             onClick={() => onSelect(s.id)}
             role="button"
+            aria-label={`${s.id}, ${KIND_LONG[s.kind]}${alerting ? ', paging' : ''}`}
             tabIndex={0}
-            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect(s.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelect(s.id);
+              }
+            }}
           >
-            <title>{`${s.id} (${s.kind})${alerting ? ' — ALERTING' : ''}`}</title>
+            <title>{`${s.id} (${KIND_LONG[s.kind]})${alerting ? ': PAGING' : ''}`}</title>
             <rect width={W} height={H} rx={7} />
-            <text x={10} y={17} className="node-name">
-              {s.id.length > 17 ? `${s.id.slice(0, 16)}…` : s.id}
+            <text x={10} y={expanded ? 22 : 17} className="node-name">
+              {name}
             </text>
-            <text x={10} y={31} className="node-kind">
-              {KIND_LABEL[s.kind]}
+            <text x={10} y={expanded ? 40 : 31} className="node-kind">
+              {expanded ? KIND_LONG[s.kind] : KIND_LABEL[s.kind]}
               {seen.length ? `  · ${seen.map((c) => c[0].toUpperCase()).join('')}` : ''}
             </text>
-            {alerting && <circle className="pulse" cx={W - 12} cy={12} r={4.5} />}
+            {alerting && <circle className="pulse" cx={W - 12} cy={12} r={expanded ? 5.5 : 4.5} />}
           </g>
         );
       })}
     </svg>
   );
+  return expanded ? <div className="map-scroll">{svg}</div> : svg;
 }
