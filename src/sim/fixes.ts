@@ -72,6 +72,7 @@ export const FIX_FOR: Record<FaultId, { fix: FixId; why: string }> = {
   clock_skew: { fix: 'sync_clock', why: 'The node clock drifted, so tokens look like they come from the future. Resync it. A rollback changes nothing because the code never changed, and a restart does not fix the clock.' },
   lock_contention: { fix: 'cancel_migration', why: 'One migration holds a lock that every query waits on. Cancel it (and run it online later). Scaling out the callers only queues more requests behind the same lock.' },
   runaway_job: { fix: 'cap_job', why: 'A scheduled job is eating the capacity. Pause it and cap its concurrency. Scaling out chases the load, and a rollback changes nothing because nothing was deployed.' },
+  silent_failure: { fix: 'restart', why: 'The process is wedged and its exporter is dead. Restarting brings both back, and the real bug can then be fixed. Rolling back would change nothing because nothing was deployed, and scaling out spreads a broken process.' },
   deploy_retry_storm: { fix: 'rollback', why: 'The release started it, so rolling it back stops both the errors and the retries. Shedding load or adding backoff treats the amplification while the bad code keeps failing.' },
   noisy_neighbour: { fix: 'move_node', why: 'CPU is saturated without extra traffic, so another workload on the node is taking it. Move to a different node. Scaling out onto the same node would not help.' },
 };

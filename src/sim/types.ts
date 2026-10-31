@@ -36,7 +36,8 @@ export type FaultId =
   | 'clock_skew'
   | 'lock_contention'
   | 'runaway_job'
-  | 'deploy_retry_storm';
+  | 'deploy_retry_storm'
+  | 'silent_failure';
 
 export type Channel = 'metrics' | 'logs' | 'traces';
 export type QueryKey = `${Channel}:${string}` | 'deploys';

@@ -488,6 +488,29 @@ export const FAULTS: Record<FaultId, FaultDef> = {
       }
     },
   },
+  silent_failure: {
+    id: 'silent_failure',
+    name: 'Failing behind a healthy dashboard',
+    short: 'The service fails, but its own metrics exporter died and the charts look fine',
+    targets: ['app'],
+    story: (s) =>
+      `${s} was throwing errors on many requests, but its metrics exporter had crashed earlier, so its dashboards showed a flat, healthy line. Only its logs and traces told the truth, and its callers were the ones who saw the errors.`,
+    signals: [
+      'Its own metrics look normal, yet its callers are erroring',
+      'Stack traces in its logs, and its own spans fail',
+      'No deploy and no resource pressure anywhere',
+    ],
+    tip: 'A flat dashboard is not proof of health: if the callers disagree with a service\'s own metrics, believe the logs and traces.',
+    applies: (t, s) => t.callers[s].length > 0,
+    effects: (t, s, fx) => {
+      addFx(fx, s, 'logs', 'log_exception');
+      addFx(fx, s, 'traces', 'tr_self_err');
+      for (const c of t.callers[s]) {
+        addFx(fx, c, 'metrics', 'err_up');
+        addFx(fx, c, 'traces', 'tr_dep_err');
+      }
+    },
+  },
 };
 
 export const FAULT_IDS = Object.keys(FAULTS) as FaultId[];

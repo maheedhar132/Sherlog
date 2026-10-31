@@ -46,3 +46,17 @@ describe('a deploy that triggers a retry storm', () => {
     }
   });
 });
+
+describe('a service failing behind a healthy dashboard', () => {
+  it('shows nothing wrong in its own metrics, yet the AI still finds it', () => {
+    let right = 0;
+    const n = 30;
+    for (let seed = 1; seed <= n; seed++) {
+      const inc = generateIncident({ seed, mode: 'normal', fault: 'silent_failure' });
+      expect(inc.fx.services[inc.truth.service].metrics.has('err_up')).toBe(false);
+      const declared = simulateAi(inc, 0.8).actions.filter((a) => a.kind === 'declare');
+      if (declared.some((a) => a.correct && a.hyp.fault === 'silent_failure')) right++;
+    }
+    expect(right / n).toBeGreaterThan(0.8);
+  });
+});

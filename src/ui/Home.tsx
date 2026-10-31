@@ -19,8 +19,8 @@ interface Props {
 
 /** Titles earned by solving different kinds of incident. */
 const RANKS: [number, string][] = [
-  [22, 'Principal SRE'],
-  [18, 'Staff SRE'],
+  [23, 'Principal SRE'],
+  [19, 'Staff SRE'],
   [12, 'Senior SRE'],
   [7, 'On-call engineer'],
   [3, 'Responder'],
