@@ -36,7 +36,7 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
   };
 
   const weakest = weakestFault(profile);
-  const share = shareText(setup, result, location.href.split('#')[0]);
+  const share = shareText(setup, result, location.href.split('#')[0], setup.daily ? profile.streak.current : 0);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(share);
@@ -140,7 +140,21 @@ export function Postmortem({ setup, result, profile, strengthBefore, strengthAft
         <section className="card">
           <h3>How the AI adapted</h3>
           {setup.daily ? (
-            <p>Daily incidents use a fixed AI so everyone races the same opponent. Your skill profile still updated.</p>
+            <>
+              <p>Daily incidents use a fixed AI so everyone races the same opponent. Your skill profile still updated.</p>
+              <p>
+                {result.playerMttr === null ? (
+                  <>
+                    🔥 Streak reset: you didn't solve today's daily. Best streak: <b>{profile.streak.best}</b>.
+                  </>
+                ) : (
+                  <>
+                    🔥 Daily streak: <b>{profile.streak.current}</b> {profile.streak.current === 1 ? 'day' : 'days'} · best{' '}
+                    <b>{profile.streak.best}</b>. Come back tomorrow to keep it going.
+                  </>
+                )}
+              </p>
+            </>
           ) : (
             <p>
               AI strength ({setup.mode}): <b>{Math.round(strengthBefore * 100)}</b> → <b>{Math.round(strengthAfter * 100)}</b>

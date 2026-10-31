@@ -73,6 +73,19 @@ Simulation and inference share one source of truth (`src/sim/faults.ts`). The AI
 
 Your first 3 incidents are **placement**: the AI adapts faster while it calibrates to you.
 
+## Your profile and daily streaks
+
+Sherlog has no accounts and no server, so your profile lives in **your browser** (`localStorage`). It remembers the AI's calibration for each mode, your record per fault type, your recent matches and your daily streak.
+
+**Streaks work like Wordle.** Play the daily incident every day in the **same browser on the same device**, and Sherlog tracks your current streak, your best streak and your daily stats: played, solved and beat-the-AI percentages. A day counts when you **solve** the daily (you name the root cause), even if the AI beats you. Giving up, or skipping a day, resets the streak. Days roll over at your local midnight.
+
+Because it's all stored in your browser:
+
+- A different browser, a different device or a private window starts from scratch.
+- Clearing your site data erases your profile and streak.
+- To move to another browser or device, use **Export profile** and **Import** on the home screen.
+- Nothing is uploaded or verified, so streaks are for you, not for a leaderboard.
+
 ## Run it locally
 
 ```bash

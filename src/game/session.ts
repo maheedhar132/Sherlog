@@ -60,11 +60,12 @@ export function fmt(seconds: number): string {
 
 const EMOJI: Record<string, string> = { metrics: '🟦', logs: '🟨', traces: '🟪', deploys: '⬜' };
 
-export function shareText(setup: MatchSetup, result: MatchResult, url: string): string {
+export function shareText(setup: MatchSetup, result: MatchResult, url: string, streak = 0): string {
   const trail = result.actions
     .map((a) => (a.kind === 'declare' ? (a.correct ? '🟩' : '🟥') : EMOJI[a.key === 'deploys' ? 'deploys' : a.key!.split(':')[0]]))
     .join('');
-  const title = setup.daily ? `Sherlog · Daily #${setup.daily.number}` : `Sherlog · ${setup.mode}`;
+  const fire = setup.daily && streak >= 2 ? ` · 🔥 ${streak}` : '';
+  const title = setup.daily ? `Sherlog · Daily #${setup.daily.number}${fire}` : `Sherlog · ${setup.mode}`;
   const you = result.playerMttr === null ? 'unsolved' : fmt(result.playerMttr);
   const verdict = result.won ? 'beat the AI 🏆' : 'lost to the AI 🤖';
   return `${title}\nMTTR ${you} vs AI ${fmt(result.aiMttr)}: ${verdict}\n${trail || '⬛'}\n${url}`;

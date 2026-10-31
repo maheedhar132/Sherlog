@@ -4,6 +4,12 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Added
+
+- Daily streaks, tracked per browser like Wordle: current and best streak, plus daily stats (played, solved, beat the AI). A day counts when you solve the daily, win or lose against the AI; giving up or missing a day resets it.
+- A streak line on the daily card, a reminder when a streak is at risk, and a 🔥 streak on the daily share card.
+- README section explaining what the profile stores and that streaks live in your browser (export and import move them).
+
 ## [1.0.0] - 2026-10-31
 
 The first public release.
