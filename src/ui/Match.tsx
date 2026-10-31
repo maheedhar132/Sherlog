@@ -23,6 +23,8 @@ const TAB_KEYS: Record<string, Tab> = { m: 'metrics', l: 'logs', t: 'traces', d:
 const HINT_COST = 15;
 /** A stopgap fix buys time without curing the cause, so it costs less than a plain wrong fix. */
 const STOPGAP_PENALTY = 10;
+/** Peeking at where the AI is looking costs more than a hint, and shows the service only. */
+const PEEK_COST = 30;
 const KIND_WORD: Record<ServiceKind, string> = {
   gateway: 'the gateway',
   app: 'an application service',
@@ -66,6 +68,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   const [mitigating, setMitigating] = useState(false);
   const [badFixes, setBadFixes] = useState<FixId[]>([]);
   const [hints, setHints] = useState(0);
+  const [peeks, setPeeks] = useState<string[]>([]);
   const [confirmGiveUp, setConfirmGiveUp] = useState(false);
   // No runbook on Hard, so no coach there either.
   const [coachOn, setCoachOn] = useState(() => !!setup.tutorial || (setup.mode !== 'hard' && (loadCoachPref() ?? coachDefault)));
@@ -172,6 +175,14 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
     setHints((h) => h + 1);
     setExtra((e) => e + cost);
     setActions((a) => [...a, { kind: 'hint', clock, cost }]);
+  };
+  const peekAtAi = () => {
+    if (peeks.length >= 2 || setup.mode === 'hard' || setup.tutorial) return;
+    const latest = [...aiNow.visible].reverse().find((a) => a.suspects.length > 0);
+    const top = latest?.suspects[0];
+    setPeeks((p) => [...p, top ? `The AI is leaning towards ${top.hyp.service} (${Math.round(top.p * 100)}% sure)` : 'The AI has not formed a view yet']);
+    setExtra((e) => e + PEEK_COST);
+    setActions((a) => [...a, { kind: 'hint', clock, cost: PEEK_COST }]);
   };
   const hintTexts = [
     `The culprit is ${KIND_WORD[t.byId[truth.service].kind]}.`,
@@ -436,6 +447,12 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
             <button onClick={useHint} disabled={hints >= 3} title="Hint (H)">
               💡 {hints >= 3 ? 'No more hints' : `Hint (${setup.tutorial ? 'free' : `+${HINT_COST}s`})`}
             </button>
+            {setup.mode !== 'hard' && !setup.tutorial && (
+              <button onClick={peekAtAi} disabled={peeks.length >= 2} title="See which service the AI suspects most">
+                👁 {peeks.length >= 2 ? 'No more peeks' : `Peek at the AI (+${PEEK_COST}s)`}
+              </button>
+            )}
+            {peeks.length > 0 && <p className="hint-text">👁 {peeks[peeks.length - 1]}</p>}
             {!coachOn && setup.mode !== 'hard' && (
               <button className="link-btn" onClick={toggleCoach}>
                 Show the coach

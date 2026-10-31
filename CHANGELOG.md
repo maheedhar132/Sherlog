@@ -23,6 +23,7 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 - The service map is a full-width strip, readable without expanding it.
 - Every system now has a queue and a worker. Easy systems are smaller, Hard systems are bigger and lose one signal on the culprit, so the three modes differ by more than AI speed.
 - The AI treats a deploy and a config change as different evidence and commits when no remaining dashboard is worth its time cost.
+- **Peek at the AI:** for 30 seconds of penalty (twice at most, never on Hard), see which service the AI currently suspects most. It shows the service only, never the fault.
 - On phones, the service list shows what each service calls, and the change-log table scrolls inside its card instead of being clipped.
 - **What the clock costs:** a live count of customer requests failed so far, and the shortlist now shows as chips you can click under the fault picker.
 - **Watch the fix work:** after you choose a fix, the service's latency responds on screen: a cure recovers, a stopgap dips and climbs back, a wrong fix changes nothing.
