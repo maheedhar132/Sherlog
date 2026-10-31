@@ -56,13 +56,11 @@ export function ServiceMap({ topology, alerts, selected, queried, onSelect, expa
       role="img"
       aria-label="Service dependency map"
     >
-      {expanded && (
-        <defs>
-          <marker id={markerId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" className="arrow" />
-          </marker>
-        </defs>
-      )}
+      <defs>
+        <marker id={markerId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth={expanded ? 7 : 6} markerHeight={expanded ? 7 : 6} orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" className="arrow" />
+        </marker>
+      </defs>
       {topology.services.flatMap((s) =>
         s.deps.map((d) => {
           const a = layout.pos[s.id];
@@ -77,7 +75,7 @@ export function ServiceMap({ topology, alerts, selected, queried, onSelect, expa
               key={`${s.id}-${d}`}
               className="edge"
               d={`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`}
-              markerEnd={expanded ? `url(#${markerId})` : undefined}
+              markerEnd={`url(#${markerId})`}
             />
           );
         }),

@@ -48,8 +48,11 @@ export function dailyNumber(date: string): number {
 }
 
 export function createMatch(profile: Profile, mode: Mode): MatchSetup {
-  const seed = Math.floor(Math.random() * 2 ** 31);
-  const fault = profile.played < 1 ? undefined : pickFault(profile, Math.random);
+  const seed = Math.floor(Math.random() * 1_000_000);
+  // Avoid showing the same fault as either of the last two matches.
+  const recent = profile.history.slice(0, 2).map((h) => h.fault);
+  let fault = profile.played < 1 ? undefined : pickFault(profile, Math.random);
+  for (let i = 0; fault && recent.includes(fault) && i < 4; i++) fault = pickFault(profile, Math.random);
   const incident = generateIncident({ seed, mode, fault });
   return { incident, ai: simulateAi(incident, profile.strength[mode]), mode, daily: null, forced: fault };
 }

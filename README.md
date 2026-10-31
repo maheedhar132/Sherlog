@@ -27,7 +27,8 @@ Incidents are generated from a seed (random service graph, culprit, noise and re
 
 - **17 kinds of failure**, from memory leaks and retry storms to expired certificates, full disks, vendor rate limits and stuck queue consumers. Some page nobody at all, and one is just real demand where scaling out is the right fix.
 - **Diagnose, then fix.** Pick the mitigation that actually stops the bleeding; the postmortem explains why the tempting ones don't work.
-- **A race you can feel.** A live race track shows you and the AI moving from paged to mitigated while an SLO error budget burns. Every result shares a link to the exact incident, so a friend can try to beat it.
+- **A race track.** Watch you and the AI move from paged to mitigated while an SLO error budget burns (the AI's run is precomputed and replayed against your clock). Every result shares a link to the exact incident, so a friend can try to beat it.
+- **Something to collect.** An incident codex and on-call ranks track the kinds of failure you have solved. Hard has no runbook: the field guide is locked.
 - **Built to be learned from.** A 2-minute guided training, an optional coach that explains what each signal usually means, and hints that cost time.
 
 ## Is the AI real?
@@ -46,7 +47,7 @@ It is also honest about its limits: it shares the simulator's symptom table (wri
 |---|---|---|
 | Easy | you win ~70% | smaller system, 1 red herring, coach on |
 | Normal | you win ~50% | 2 red herrings, coincidental deploys and config changes |
-| Hard | you win ~30% | bigger system, 3 red herrings, one signal on the culprit goes missing |
+| Hard | you win ~30% | bigger system, 3 red herrings, one signal on the culprit goes missing, field guide locked |
 | Daily | fixed AI | same incident and AI for everyone, with a streak |
 
 Metrics cost 10 s, logs 15 s, traces 20 s, the change log 5 s and a hint 15 s. A wrong answer or a wrong fix costs 20 s, then 40 s, then 60 s, so guessing does not pay. After each match the AI's strength moves toward your target win rate, and you see more of the incident types you are weakest at. The targets are tuned on simulated players so far, so real-player feedback is welcome.

@@ -59,6 +59,34 @@ describe('pages', () => {
   });
 });
 
+describe('alert noise and seeds', () => {
+  it('some incidents page on unrelated, flapping alerts', () => {
+    let withNoise = 0;
+    for (let seed = 1; seed <= 80; seed++) {
+      const inc = generateIncident({ seed, mode: 'hard' });
+      for (const line of inc.noise) expect(line).toMatch(/^[a-z-]+: /);
+      if (inc.noise.length) withNoise++;
+    }
+    expect(withNoise).toBeGreaterThan(0);
+  });
+
+  it('new matches use short seeds and avoid repeating the last two faults', () => {
+    const profile = newProfile();
+    profile.played = 5;
+    profile.history = [
+      { at: '', mode: 'normal', fault: 'disk_full', won: true, playerMttr: 60, aiMttr: 90, daily: false },
+      { at: '', mode: 'normal', fault: 'db_pool', won: true, playerMttr: 60, aiMttr: 90, daily: false },
+    ];
+    let repeats = 0;
+    for (let i = 0; i < 60; i++) {
+      const m = createMatch(profile, 'normal');
+      expect(m.incident.seed).toBeLessThan(1_000_000);
+      if (m.forced === 'disk_full' || m.forced === 'db_pool') repeats++;
+    }
+    expect(repeats).toBeLessThan(6);
+  });
+});
+
 describe('shared incident links', () => {
   it('parses valid links and rejects bad ones', () => {
     expect(parseIncidentHash('#seed=229&mode=normal')).toEqual({ seed: 229, mode: 'normal', fault: undefined });

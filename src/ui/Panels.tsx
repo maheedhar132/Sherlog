@@ -119,6 +119,31 @@ export function MetricsPanel({ series, markers = [] }: { series: MetricSeries[];
 
 // ---------------------------------------------------------------- logs
 
+/** Log volume in three-minute buckets, so you can see when the errors started. */
+function LogTimeline({ lines }: { lines: LogLine[] }) {
+  const buckets = Array.from({ length: 20 }, () => ({ info: 0, bad: 0 }));
+  for (const l of lines) buckets[Math.min(19, Math.floor(l.t / 3))][l.level === 'INFO' ? 'info' : 'bad']++;
+  const max = Math.max(1, ...buckets.map((b) => b.info + b.bad));
+  const onset = Math.floor(ONSET / 3);
+  return (
+    <div className="log-timeline">
+      <div className="bars" role="img" aria-label="Log volume over the last hour, warnings and errors in red">
+        {buckets.map((b, i) => (
+          <div key={i} className={`col ${i === onset ? 'onset' : ''}`} title={`${clockLabel(i * 3).slice(0, 5)}: ${b.info} info, ${b.bad} warn or error`}>
+            <i className="bad" style={{ height: `${(b.bad / max) * 100}%` }} />
+            <i className="info" style={{ height: `${(b.info / max) * 100}%` }} />
+          </div>
+        ))}
+      </div>
+      <div className="xticks" aria-hidden="true">
+        {[0, 15, 30, 45, 59].map((m) => (
+          <span key={m}>{clockLabel(m).slice(0, 5)}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** Wrap each match of the filter text in a highlight. */
 function highlight(msg: string, q: string) {
   if (!q) return msg;
@@ -132,6 +157,7 @@ export function LogsPanel({ lines }: { lines: LogLine[] }) {
   const shown = lines.filter((l) => (!problemsOnly || l.level !== 'INFO') && (!q || l.msg.toLowerCase().includes(q.toLowerCase())));
   return (
     <div className="logs">
+      <LogTimeline lines={lines} />
       <div className="logs-bar">
         <input placeholder="filter logs…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Filter logs" />
         <span className="count">

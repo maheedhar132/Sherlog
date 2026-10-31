@@ -32,10 +32,11 @@ export function generateIncident({ seed, mode, fault }: IncidentOptions): Incide
   }
   const truth: Hypothesis = { service: pick(rng, targets).id, fault: chosen };
   const fx = faultEffects(topology, truth);
-  const herrings = addHerrings(topology, fx, truth, mode, rng);
+  const noise: string[] = [];
+  const herrings = addHerrings(topology, fx, truth, mode, rng, noise);
   if (mode === 'hard') dropOneSignal(fx, truth, rng);
   const data = renderAll(rng, topology, fx);
-  return { seed, mode, topology, truth, fx, herrings, data };
+  return { seed, mode, topology, truth, fx, herrings, noise, data };
 }
 
 export function queryKeys(t: Topology): QueryKey[] {

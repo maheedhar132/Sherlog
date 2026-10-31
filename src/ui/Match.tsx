@@ -59,6 +59,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   const [mitigating, setMitigating] = useState(false);
   const [badFixes, setBadFixes] = useState<FixId[]>([]);
   const [hints, setHints] = useState(0);
+  const [confirmGiveUp, setConfirmGiveUp] = useState(false);
   const [coachOn, setCoachOn] = useState(() => !!setup.tutorial || (loadCoachPref() ?? coachDefault));
 
   useEffect(() => {
@@ -72,7 +73,10 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   const nextFixPenalty = wrongPenalty(badFixes.length + 1);
   const aiNow = aiStateAt(ai, wall);
   const alerts = useMemo(() => detectAlerts(incident), [incident]);
-  const pageLines = useMemo(() => pages(incident, alerts), [incident, alerts]);
+  const pageLines = useMemo(
+    () => [...pages(incident, alerts), ...incident.noise.map((text) => ({ service: text, text }))],
+    [incident, alerts],
+  );
   const options = useMemo(() => fixOptions(incident.seed, truth.fault), [incident, truth.fault]);
 
   useEffect(() => {
@@ -176,8 +180,9 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
     const found = [...observe(incident, lastQuery.key)].map((f) => FEATURE_TIPS[f.split(':')[0] === 'dep' || f.split(':')[0] === 'cfg' ? f.split(':')[0] : f]);
     return [...new Set(found.filter(Boolean))].slice(0, 3);
   }, [lastQuery?.key, incident]);
-  const nudge =
-    queried.size === 0
+  const nudge = mitigating
+    ? 'You found it. Now pick the fix that stops the bleeding.'
+    : queried.size === 0
       ? 'Start with a paging service: click it on the map, then pull its metrics.'
       : services.size < 2
         ? 'That service may only be a victim. Click something it depends on and compare.'
@@ -188,7 +193,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
   const steps: [string, boolean][] = [
     ['Read the page: the red services are alerting.', true],
     ['Pull a dashboard. Every one costs time.', queried.size > 0],
-    ['Compare a second service: click it on the map.', services.size >= 2],
+    ['Pull a dashboard for a second service: click it on the map first.', services.size >= 2],
     ['Find the odd one out: whose own numbers look wrong, not just slow?', services.has(truth.service)],
     ['Declare the service and the fault.', actions.some((a) => a.kind === 'declare' && a.correct)],
     ['Choose the fix that stops the bleeding.', false],
@@ -211,6 +216,10 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
         : 0.1;
   const youProgress = mitigating ? 0.75 : queried.size ? 0.25 + Math.min(0.4, queried.size * 0.06) : 0.1;
   const budgetUsed = Math.min(1, clock / ERROR_BUDGET_SECONDS);
+  const nextAi = ai.actions.find((a) => a.wall > wall);
+  const aiEta = !aiNow.finished && nextAi ? Math.max(1, Math.ceil(nextAi.wall - wall)) : null;
+  // No runbook on Hard: the field guide lists every signal and fix.
+  const guideLocked = setup.mode === 'hard' && !setup.tutorial;
   const markers = incident.data.deploys
     .filter((e) => e.service === selected)
     .map((e) => ({ t: e.t, label: `${e.kind === 'config' ? 'Config change' : 'Deploy'}: ${e.version} by ${e.author}` }));
@@ -233,13 +242,13 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
             {setup.tutorial ? 'TRAINING' : setup.daily ? `DAILY #${setup.daily.number}` : `INC-${incident.seed}`} · {setup.mode.toUpperCase()}
           </div>
           <div className="paging">
-            🔔 PAGED 14:02 · {pageLines.length ? `${pageLines.length} alerting` : 'customers report problems, no alert fired'}
+            🔔 PAGED 14:02 · {alerts.size ? `${alerts.size} alerting` : 'customers report problems, no alert fired'}
           </div>
           <ul className="page-lines">
-            {pageLines.slice(0, 2).map((p) => (
+            {pageLines.slice(0, 3).map((p) => (
               <li key={p.service}>{p.text}</li>
             ))}
-            {pageLines.length > 2 && <li>+{pageLines.length - 2} more</li>}
+            {pageLines.length > 3 && <li>+{pageLines.length - 3} more</li>}
           </ul>
         </div>
         <div className={`clock ai ${aiNow.finished ? 'done' : ''}`}>
@@ -414,6 +423,7 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
             <div className="confidence">
               <div style={{ width: `${Math.round((aiNow.finished ? 1 : aiConfidence) * 100)}%` }} />
             </div>
+            {aiEta !== null && <p className="ai-next">⏱ next move in {aiEta}s</p>}
             <ol>
               {aiFeed.map((a, i) => {
                 if (a.kind === 'declare')
@@ -458,8 +468,10 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
             </ol>
           </section>
           <div className="row-buttons">
-            <button onClick={onOpenGuide}>📘 Field guide</button>
-            <button onClick={giveUp}>Give up</button>
+            <button onClick={onOpenGuide} disabled={guideLocked} title={guideLocked ? 'No runbook on Hard' : undefined}>
+              📘 Field guide{guideLocked ? ' (off in Hard)' : ''}
+            </button>
+            <button onClick={() => setConfirmGiveUp(true)}>Give up</button>
           </div>
         </aside>
       </div>
@@ -506,6 +518,19 @@ export function Match({ setup, coachDefault, onFinish, onOpenGuide }: Props) {
             ))}
           </div>
           <p className="hint">A wrong fix costs +{nextFixPenalty}s, and the next one more.</p>
+        </Modal>
+      )}
+
+      {confirmGiveUp && (
+        <Modal label="Give up?" onClose={() => setConfirmGiveUp(false)}>
+          <h2>Give up on this incident?</h2>
+          <p>{setup.daily ? "This ends today's daily and resets your streak." : 'This ends the incident without a result and goes to the postmortem.'}</p>
+          <div className="row-buttons">
+            <button className="primary" onClick={() => setConfirmGiveUp(false)}>
+              Keep investigating
+            </button>
+            <button onClick={giveUp}>Give up</button>
+          </div>
         </Modal>
       )}
 

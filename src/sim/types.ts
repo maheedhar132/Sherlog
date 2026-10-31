@@ -108,5 +108,7 @@ export interface Incident {
   /** The true symptoms including red herrings (used by tests and the postmortem, never by the AI). */
   fx: Fx;
   herrings: string[];
+  /** Alerts that fire but have nothing to do with the incident. */
+  noise: string[];
   data: IncidentData;
 }

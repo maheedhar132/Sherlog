@@ -16,6 +16,16 @@ interface Props {
   onReset: () => void;
 }
 
+/** Titles earned by solving different kinds of incident. */
+const RANKS: [number, string][] = [
+  [17, 'Principal SRE'],
+  [14, 'Staff SRE'],
+  [10, 'Senior SRE'],
+  [6, 'On-call engineer'],
+  [3, 'Responder'],
+  [0, 'Pager rookie'],
+];
+
 const MODE_INFO: Record<Mode, { title: string; blurb: string }> = {
   easy: { title: 'Easy', blurb: 'A smaller system, one red herring and a coach by your side.' },
   normal: { title: 'Normal', blurb: 'A bigger system, coincidental deploys and noisy logs.' },
@@ -32,6 +42,8 @@ export function Home({ profile, onPlay, onTutorial, onDaily, onOpenGuide, onImpo
   const streak = streakView(profile.streak, todayKey());
   const ds = profile.dailyStats;
   const pct = (n: number) => (ds.played ? `${Math.round((n / ds.played) * 100)}%` : '–');
+  const solvedKinds = FAULT_IDS.filter((f) => profile.faults[f].solved > 0).length;
+  const rank = RANKS.find(([min]) => solvedKinds >= min)![1];
 
   return (
     <div className="home">
@@ -134,6 +146,9 @@ export function Home({ profile, onPlay, onTutorial, onDaily, onOpenGuide, onImpo
                     · weakest: <b>{FAULTS[weakest].name}</b>
                   </>
                 )}
+              </p>
+              <p className="rank">
+                🏅 {rank} · incident codex {solvedKinds}/{FAULT_IDS.length}
               </p>
               {ds.played > 0 && (
                 <div className="daily-stats" aria-label="Daily incident stats">

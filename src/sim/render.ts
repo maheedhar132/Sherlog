@@ -306,9 +306,12 @@ export function renderTrace(rng: Rng, t: Topology, fx: Fx, s: Service): Span {
   let self = between(rng, ...BASE[s.kind].span);
   if (tr.has('tr_self_slow')) {
     self += between(rng, 1500, 3500);
-    if (s.kind === 'db') attrs['db.plan'] = 'Seq Scan (rows=4.2M)';
+    // A span tag should only point at the cause that is real: a GC pause only when memory is climbing, a query plan only for a saturated database.
+    const own = fx.services[s.id].metrics;
+    if (s.kind === 'db' && own.has('conn_max')) attrs['db.plan'] = 'Seq Scan (rows=4.2M)';
     else if (s.kind === 'external') attrs['net.peer.rtt_ms'] = String(Math.round(self));
-    else attrs['runtime.gc_pause_ms'] = String(Math.round(self * 0.8));
+    else if (own.has('mem_climb')) attrs['runtime.gc_pause_ms'] = String(Math.round(self * 0.8));
+    else attrs['span.self_ms'] = String(Math.round(self));
   }
   let status: Span['status'] = 'ok';
   if (tr.has('tr_self_err')) {

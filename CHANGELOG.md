@@ -14,12 +14,18 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 - A live **race track** (paged, investigating, diagnosed, mitigated) for you and the AI, and an **SLO error budget** that burns while the incident runs.
 - **Share links:** a shared result links to the exact incident (`#seed=...&mode=...`), so a friend can try to beat it.
 - Charts show the SLO as a line and mark deploys and config changes; a Run button is always visible; on phones the map becomes a list of tappable services.
+- **Alert noise:** unrelated, flapping alerts sometimes fire next to the real ones.
+- An **incident codex** and on-call ranks, based on the kinds of failure you have solved. The scenario picker avoids repeating either of your last two faults.
+- A log-volume timeline above the logs, arrows on the compact service map, a countdown to the AI's next move, and a confirmation before giving up.
 
 ### Changed
 
 - The service map is a full-width strip, readable without expanding it.
 - Every system now has a queue and a worker. Easy systems are smaller, Hard systems are bigger and lose one signal on the culprit, so the three modes differ by more than AI speed.
 - The AI treats a deploy and a config change as different evidence and commits when no remaining dashboard is worth its time cost.
+- Hard has no field guide mid-match, and the header no longer sticks on short windows.
+- Span tags only point at causes that are real: a GC pause only when memory is climbing, a query plan only for a saturated database.
+- Incident numbers are shorter.
 
 ## [1.1.0] - 2026-10-31
 

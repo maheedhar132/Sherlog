@@ -1329,3 +1329,67 @@ h3 {
   justify-content: center;
   gap: 0 16px;
 }
+
+/* ---------------------------------------------------------------- round three */
+
+.ai-next {
+  margin: 0 0 6px;
+  font: 11.5px var(--mono);
+  color: var(--violet);
+}
+.rank {
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+.log-timeline {
+  margin-bottom: 10px;
+  padding: 6px 8px 2px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.log-timeline .bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 44px;
+}
+.log-timeline .col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+  border-bottom: 1px solid var(--border);
+}
+.log-timeline .col.onset {
+  background: rgba(255, 93, 108, 0.1);
+}
+.log-timeline i {
+  display: block;
+  width: 100%;
+}
+.log-timeline i.info {
+  background: #3a4d63;
+}
+.log-timeline i.bad {
+  background: var(--bad);
+}
+.log-timeline .xticks {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 2px;
+  font: 10px var(--mono);
+  color: var(--muted);
+}
+@media (max-height: 820px) {
+  .race-bar {
+    position: static;
+  }
+}
+@media (max-width: 700px) {
+  .metric .xticks span:nth-child(2),
+  .metric .xticks span:nth-child(4) {
+    display: none;
+  }
+}

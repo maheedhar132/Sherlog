@@ -60,7 +60,7 @@ const HERRINGS: Record<Mode, { count: number; kinds: HerringKind[] }> = {
 };
 
 /** Unrelated noise that real incidents always have. Returns human-readable notes for the postmortem. */
-export function addHerrings(t: Topology, fx: Fx, truth: Hypothesis, mode: Mode, rng: Rng): string[] {
+export function addHerrings(t: Topology, fx: Fx, truth: Hypothesis, mode: Mode, rng: Rng, noise: string[] = []): string[] {
   const notes: string[] = [];
   const { count, kinds } = HERRINGS[mode];
   const quiet = (kindsAllowed: string[]) =>
@@ -75,6 +75,7 @@ export function addHerrings(t: Topology, fx: Fx, truth: Hypothesis, mode: Mode, 
         const s = pick(rng, c);
         addFx(fx, s.id, 'metrics', 'cpu_up');
         notes.push(`Unrelated CPU spike on ${s.id} (a scheduled batch job).`);
+        noise.push(`${s.id}: CPU above 85% for 5m (this alert fired 4 times this week)`);
         break;
       }
       case 'log_timeout': {
@@ -105,6 +106,7 @@ export function addHerrings(t: Topology, fx: Fx, truth: Hypothesis, mode: Mode, 
         const s = pick(rng, c);
         addFx(fx, s.id, 'metrics', 'lat_up');
         notes.push(`${s.id} had its own unrelated latency blip (noisy neighbour on its node).`);
+        noise.push(`${s.id}: p99 above SLO for 3m (flapping, fired 3 times today)`);
         break;
       }
     }
