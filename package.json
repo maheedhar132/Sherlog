@@ -1,7 +1,7 @@
 {
   "name": "sherlog",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "An on-call detective game: race an adaptive AI investigator to the root cause of a simulated production incident. Free, runs entirely in your browser.",
   "type": "module",
   "license": "MIT",

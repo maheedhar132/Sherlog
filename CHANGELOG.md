@@ -4,6 +4,10 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-01
+
+The full incident lifecycle: 23 fault types, a mitigation step, guided training, aftershocks, on-call shifts and a race track.
+
 ### Added
 
 - **Eleven new fault types** (17 in all): thread pool exhaustion, slow third-party API, certificate expiry, disk full, stuck queue consumer (a poison message), a bad config or feature flag, a partial zone failure, a legitimate traffic spike (where scaling out is the right fix), a performance regression, a vendor rate limit and a noisy neighbour. They add disk and consumer-lag metrics, TLS, disk, config, zone and rate-limit log signals, and config flips in the change log. Some of them page nobody.
@@ -82,6 +86,7 @@ The first public release.
 - Field guide, profile export and import, and link-preview images for social sharing.
 - [HOW-IT-WORKS.md](HOW-IT-WORKS.md), explaining why the opponent is AI and not hardcoded rules, backed by a test that a new fault type needs no AI code changes.
 
-[Unreleased]: https://github.com/maheedhar132/Sherlog/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/maheedhar132/Sherlog/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/maheedhar132/Sherlog/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/maheedhar132/Sherlog/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/maheedhar132/Sherlog/releases/tag/v1.0.0
