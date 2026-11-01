@@ -1,5 +1,6 @@
 import { COST, WRONG_PENALTY } from '../sim/constants';
 import { FAULTS, FAULT_IDS } from '../sim/faults';
+import { FIXES, FIX_FOR } from '../sim/fixes';
 import { Modal } from './Modal';
 
 export function FieldGuide({ onClose }: { onClose: () => void }) {
@@ -28,6 +29,7 @@ export function FieldGuide({ onClose }: { onClose: () => void }) {
                   ))}
                 </ul>
                 <p className="tip">💡 {d.tip}</p>
+                {FIX_FOR[f] && <p className="muted">🔧 Fix: {FIXES[FIX_FOR[f].fix]}</p>}
               </section>
             );
           })}

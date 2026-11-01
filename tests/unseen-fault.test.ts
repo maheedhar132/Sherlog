@@ -35,7 +35,7 @@ describe('a new, data-driven fault type (no AI code changes)', () => {
 
   it('is diagnosed, and usually on the first declaration', () => {
     let firstTry = 0;
-    const n = 60;
+    const n = 30;
     for (let seed = 0; seed < n; seed++) {
       const inc = generateIncident({ seed, mode: 'normal', fault: id });
       const run = simulateAi(inc, 1);

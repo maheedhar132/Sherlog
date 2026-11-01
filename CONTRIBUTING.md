@@ -19,7 +19,7 @@ Thanks for helping make on-call less scary. Sherlog is maintained by [@maheedhar
 
 ## What we'd love
 
-- **New fault types.** One entry in [`src/sim/faults.ts`](src/sim/faults.ts): valid targets, symptoms per channel, the postmortem story and a tip. The test suite automatically checks that it renders, is detected and is solvable. Ideas: certificate expiry, disk full, clock skew, thread-pool exhaustion, a bad feature flag, Kafka consumer lag.
+- **New fault types.** An entry in [`src/sim/faults.ts`](src/sim/faults.ts) (valid targets, symptoms per channel, the postmortem story and a tip) and one in [`src/sim/fixes.ts`](src/sim/fixes.ts) (the right mitigation and why the tempting ones fail). A new kind of signal also needs a renderer and a detector in `src/sim/render.ts` and `src/sim/detect.ts`. The tests automatically check that it renders, is detected, is solvable and has a fix. Ideas: clock skew, autoscaling lag, a hot shard, a split brain, multi-region cascades, multi-fault incidents.
 - **Better signals.** More realistic log lines, trace attributes or metric shapes.
 - **Accessibility and mobile improvements.**
 - **Bug reports with a seed.** The `INC-xxxxx` number in the match header reproduces the incident.

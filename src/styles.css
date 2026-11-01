@@ -213,6 +213,9 @@ h3 {
 .mode-card.hard h2 {
   color: var(--bad);
 }
+.mode-card.shift h2 {
+  color: var(--accent);
+}
 .mode-card.daily h2 {
   color: var(--violet);
 }
@@ -950,4 +953,576 @@ h3 {
   .confidence div {
     transition: none;
   }
+}
+
+/* ---------------------------------------------------------------- dashboards */
+
+.metric .plot {
+  position: relative;
+}
+.metric .crosshair {
+  stroke: var(--muted);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.metric .point {
+  fill: var(--accent);
+  stroke: var(--bg);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.metric .ymax {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  font: 10px var(--mono);
+  color: var(--muted);
+  pointer-events: none;
+}
+.metric .xticks {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 2px 3px;
+  font: 10px var(--mono);
+  color: var(--muted);
+}
+.metric svg {
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+.logs-bar .count {
+  font: 11px var(--mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.log-lines mark {
+  background: rgba(255, 184, 77, 0.28);
+  color: inherit;
+  border-radius: 2px;
+}
+
+/* ---------------------------------------------------------------- match layout */
+
+.map-strip {
+  margin-bottom: 12px;
+}
+.map-strip .service-map {
+  width: 100%;
+  height: auto;
+  /* Leave room for the dashboards on short windows. */
+  max-height: min(236px, 27vh);
+}
+.hint-inline {
+  flex: 1;
+  margin: 0 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.page-lines {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  font: 11.5px/1.45 var(--mono);
+  color: #ff9aa4;
+}
+.paging {
+  font-size: 13px;
+}
+.coach .nudge {
+  margin: 0 0 8px;
+  color: var(--text);
+}
+.coach .tips {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.coach .tips li {
+  margin-bottom: 4px;
+}
+.coach .hint-text {
+  margin: 6px 0 0;
+  color: var(--warn);
+  font-size: 13px;
+}
+.training ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+}
+.training li {
+  padding: 4px 0;
+  color: var(--muted);
+}
+.training li.done {
+  color: var(--good);
+}
+.training li.now {
+  color: var(--text);
+  font-weight: 600;
+}
+.link-btn {
+  background: none;
+  border-color: transparent;
+  color: var(--muted);
+  text-decoration: underline;
+  padding: 6px 0 0;
+}
+.declare > button + button {
+  margin-top: 8px;
+  width: 100%;
+}
+.shortcuts {
+  margin-top: 10px;
+}
+.fix-options {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+.fix-options .fix {
+  text-align: left;
+  padding: 10px 12px;
+}
+.fix-options .fix:disabled {
+  text-decoration: line-through;
+}
+
+/* ---------------------------------------------------------------- home + postmortem */
+
+.hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 10px;
+}
+.fix-card .fix-name {
+  font-weight: 650;
+  margin: 0 0 6px;
+}
+.belief {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.belief .grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.belief .axis {
+  fill: var(--muted);
+  font: 11px var(--mono);
+}
+.belief .belief-line {
+  fill: none;
+  stroke: var(--violet);
+  stroke-width: 2.5;
+}
+.belief .dot {
+  fill: var(--violet);
+  stroke: var(--panel);
+  stroke-width: 2;
+}
+.belief .dot.dip {
+  fill: var(--bad);
+}
+.belief .step {
+  font-size: 13px;
+  fill: var(--text);
+}
+
+@media (max-width: 560px) {
+  .race-bar {
+    position: static;
+  }
+  .hint-inline {
+    display: none;
+  }
+  .map-strip .service-map {
+    max-height: 200px;
+  }
+}
+
+/* ---------------------------------------------------------------- race track and budget */
+
+.race-bar .race-track {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 4px;
+  padding-top: 6px;
+}
+.race-track .stops {
+  position: relative;
+  height: 14px;
+  font: 10.5px var(--mono);
+  color: var(--muted);
+}
+.race-track .stops span {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.race-track .stops span:last-child {
+  transform: translateX(-100%);
+}
+.race-track .lane {
+  position: relative;
+  height: 16px;
+  background: var(--panel-2);
+  border-radius: 8px;
+}
+.race-track .lane .fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.7s ease;
+}
+.race-track .lane.you .fill {
+  background: rgba(76, 194, 255, 0.35);
+}
+.race-track .lane.ai .fill {
+  background: rgba(180, 140, 255, 0.35);
+}
+.race-track .lane b {
+  position: absolute;
+  top: 0;
+  transform: translateX(-100%);
+  padding: 0 7px;
+  font: 700 10px/16px var(--mono);
+  border-radius: 8px;
+  transition: left 0.7s ease;
+}
+.race-track .lane.you b {
+  background: var(--accent);
+  color: #04121c;
+}
+.race-track .lane.ai b {
+  background: var(--violet);
+  color: #140a2a;
+}
+.budget {
+  position: relative;
+  height: 16px;
+  background: var(--panel-2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.budget div {
+  height: 100%;
+  background: rgba(61, 220, 151, 0.4);
+  transition: width 0.4s linear;
+}
+.budget div.warm {
+  background: rgba(255, 184, 77, 0.45);
+}
+.budget div.hot {
+  background: rgba(255, 93, 108, 0.55);
+}
+.budget span {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  font: 10.5px/16px var(--mono);
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------- chart SLO line and markers */
+
+.metric .slo {
+  stroke: var(--warn);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+.metric .marker {
+  fill: var(--violet);
+}
+.metric .slolabel {
+  position: absolute;
+  left: 4px;
+  transform: translateY(-100%);
+  font: 9.5px var(--mono);
+  color: var(--warn);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- inspector, phone chips */
+
+.run-now {
+  padding: 5px 12px;
+}
+.query-cta {
+  min-height: 200px;
+}
+.service-chips {
+  display: none;
+}
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0 6px 6px 0;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.chip small {
+  color: var(--muted);
+  font: 10.5px var(--mono);
+}
+.chip.alerting {
+  border-color: var(--bad);
+}
+.chip.selected {
+  border-color: var(--accent);
+  background: #13283a;
+}
+.chip .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bad);
+  align-self: center;
+}
+@media (max-width: 600px) {
+  .map-strip .service-map {
+    display: none;
+  }
+  .service-chips {
+    display: block;
+  }
+  .race-track .stops {
+    font-size: 9px;
+  }
+}
+
+/* ---------------------------------------------------------------- compact header */
+
+.race-bar {
+  padding: 8px 14px;
+}
+.race-bar .race-track {
+  gap: 3px;
+  padding-top: 2px;
+}
+.race-track .stops {
+  height: 12px;
+  font-size: 10px;
+}
+.race-track .lane {
+  height: 12px;
+  border-radius: 6px;
+}
+.race-track .lane .fill {
+  border-radius: 6px;
+}
+.race-track .lane b {
+  font: 700 9px/12px var(--mono);
+}
+.budget {
+  height: 13px;
+  border-radius: 7px;
+}
+.budget span {
+  font: 10px/13px var(--mono);
+}
+.page-lines {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 16px;
+}
+
+/* ---------------------------------------------------------------- round three */
+
+.ai-next {
+  margin: 0 0 6px;
+  font: 11.5px var(--mono);
+  color: var(--violet);
+}
+.rank {
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+.log-timeline {
+  margin-bottom: 10px;
+  padding: 6px 8px 2px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.log-timeline .bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 44px;
+}
+.log-timeline .col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+  border-bottom: 1px solid var(--border);
+}
+.log-timeline .col.onset {
+  background: rgba(255, 93, 108, 0.1);
+}
+.log-timeline i {
+  display: block;
+  width: 100%;
+}
+.log-timeline i.info {
+  background: #3a4d63;
+}
+.log-timeline i.bad {
+  background: var(--bad);
+}
+.log-timeline .xticks {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 2px;
+  font: 10px var(--mono);
+  color: var(--muted);
+}
+@media (max-height: 820px) {
+  .race-bar {
+    position: static;
+  }
+}
+@media (max-width: 700px) {
+  .metric .xticks span:nth-child(2),
+  .metric .xticks span:nth-child(4) {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- phone: keep the clocks in view */
+
+.query-cta {
+  min-height: 120px;
+}
+@media (max-width: 560px) {
+  .race-bar {
+    position: sticky;
+    top: 0;
+    padding: 6px 10px;
+  }
+  .race-bar .page-lines,
+  .race-track .stops {
+    display: none;
+  }
+  .clock b {
+    font-size: 20px;
+  }
+}
+
+.rival-alert {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(239, 83, 80, 0.14);
+  border: 1px solid var(--bad);
+  font-weight: 600;
+  animation: rival-pulse 1.6s ease-in-out infinite;
+}
+@keyframes rival-pulse {
+  50% {
+    background: rgba(239, 83, 80, 0.26);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rival-alert {
+    animation: none;
+  }
+}
+
+.recovery {
+  margin: 12px 0;
+}
+.recovery svg {
+  width: 100%;
+  height: 110px;
+  background: var(--panel-2, rgba(255, 255, 255, 0.03));
+  border-radius: 8px;
+}
+.recovery .base {
+  stroke: var(--good);
+  stroke-dasharray: 4 4;
+  opacity: 0.6;
+}
+.recovery .cut {
+  stroke: var(--muted);
+  stroke-dasharray: 2 3;
+}
+.recovery .line {
+  stroke-width: 2.5;
+}
+.recovery .line.fixed {
+  stroke: var(--good);
+}
+.recovery .line.stopgap {
+  stroke: var(--warn, #f5a623);
+}
+.recovery .line.wrong {
+  stroke: var(--bad);
+}
+.recovery-title {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.impact {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--bad);
+  text-align: center;
+}
+.shortlist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+.shortlist .pick {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+}
+.shortlist .pick.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.chip .calls {
+  flex-basis: 100%;
+}
+.chip {
+  flex-wrap: wrap;
+}
+
+/* Let grid children shrink so wide tables scroll inside their card instead of stretching it. */
+.card,
+.col-main,
+.col-left,
+.col-right,
+.match > * {
+  min-width: 0;
+}
+
+.hero-demo {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  margin-top: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
 }

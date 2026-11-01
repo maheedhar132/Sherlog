@@ -4,6 +4,40 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Added
+
+- **Eleven new fault types** (17 in all): thread pool exhaustion, slow third-party API, certificate expiry, disk full, stuck queue consumer (a poison message), a bad config or feature flag, a partial zone failure, a legitimate traffic spike (where scaling out is the right fix), a performance regression, a vendor rate limit and a noisy neighbour. They add disk and consumer-lag metrics, TLS, disk, config, zone and rate-limit log signals, and config flips in the change log. Some of them page nobody.
+- **A mitigation step.** After the diagnosis, choose the fix that stops the bleeding. A wrong fix costs time, the AI applies the fix too, and the postmortem explains the right one.
+- **Guided 2-minute training**, an optional **coach** that explains what each signal usually means (it reads only what you have opened), and **hints** that cost 15 s.
+- Pages now show SLO and error-budget numbers. Charts show values on hover with a shared crosshair and time axes, logs highlight the filter, and keyboard shortcuts switch dashboards.
+- The postmortem charts how sure the AI was of the right answer after each step.
+- A live **race track** (paged, investigating, diagnosed, mitigated) for you and the AI, and an **SLO error budget** that burns while the incident runs.
+- **Share links:** a shared result links to the exact incident (`#seed=...&mode=...`), so a friend can try to beat it.
+- Charts show the SLO as a line and mark deploys and config changes; a Run button is always visible; on phones the map becomes a list of tappable services.
+- **Alert noise:** unrelated, flapping alerts sometimes fire next to the real ones.
+- An **incident codex** and on-call ranks, based on the kinds of failure you have solved. The scenario picker avoids repeating either of your last two faults.
+- A log-volume timeline above the logs, arrows on the compact service map, a countdown to the AI's next move, and a confirmation before giving up.
+
+### Changed
+
+- The service map is a full-width strip, readable without expanding it.
+- Every system now has a queue and a worker. Easy systems are smaller, Hard systems are bigger and lose one signal on the culprit, so the three modes differ by more than AI speed.
+- The AI treats a deploy and a config change as different evidence and commits when no remaining dashboard is worth its time cost.
+- First-time visitors see a short recording of an incident being solved on the home screen, before they pick a mode.
+- **Peek at the AI:** for 30 seconds of penalty (twice at most, never on Hard), see which service the AI currently suspects most. It shows the service only, never the fault.
+- On phones, the service list shows what each service calls, and the change-log table scrolls inside its card instead of being clipped.
+- **What the clock costs:** a live count of customer requests failed so far, and the shortlist now shows as chips you can click under the fault picker.
+- **Watch the fix work:** after you choose a fix, the service's latency responds on screen: a cure recovers, a stopgap dips and climbs back, a wrong fix changes nothing.
+- **Six more fault types** (23 in all), including a service failing behind a healthy-looking dashboard (its metrics exporter died, so only logs and traces tell the truth): long GC pauses, clock skew, lock contention behind a migration, a runaway batch job, and a bad deploy that also triggers a retry storm (two causes in one incident). Each has its own log signature, cure and (for three) a tempting stopgap. A seed with no forced fault still picks from the original 17, so existing seeds and shared links are unchanged.
+- **A shortlist in the fault picker:** once you have opened dashboards on a service, the faults that best explain them are listed first. It reads only what you have paid to see, and it is off on Hard.
+- **A rival closing in:** a pulsing banner warns when the AI is about to commit to a diagnosis, and counts down once it has found the cause and is applying the fix. It never shows what the AI concluded.
+- **Stopgap fixes:** for faults where an obvious fix helps for a minute without removing the cause (scaling out a leak, failing over a saturated database), one option is a stopgap. It costs less than a plain wrong fix, and the postmortem explains why it only treats the symptom.
+- **Aftershocks:** on Normal and Hard, fixing an incident can leave a second, unrelated fault on the same system, with a fresh race against the AI. It is decided by the seed, so a shared link behaves the same for everyone.
+- **On-call shift:** three incidents back to back, scored as one run (your total time against the AI's), with your best shift kept in your profile and a shareable summary.
+- Hard has no field guide or coach, anywhere in the app. The fault picker offers every fault (grouped by what fits the service) and starts blank, so Declare can't be one click away from a wrong guess. The AI paces itself a little faster, running out of the SLO error budget is recorded as a breach, and the header no longer sticks on short windows.
+- Span tags only point at causes that are real: a GC pause only when memory is climbing, a query plan only for a saturated database.
+- Incident numbers are shorter, "weakest area" waits for three matches, and unseen incident types no longer show a filled bar.
+
 ## [1.1.0] - 2026-10-31
 
 Daily streaks, fairer rules, a visible AI reasoning trace, and claims that match what the game does.

@@ -29,7 +29,7 @@ describe('incident generation', () => {
         for (const key of queryKeys(inc.topology)) {
           const obs = [...observe(inc, key)].sort();
           let want: string[];
-          if (key === 'deploys') want = [...inc.fx.deploys].map((s) => `dep:${s}`);
+          if (key === 'deploys') want = [...[...inc.fx.deploys].map((s) => `dep:${s}`), ...[...inc.fx.configs].map((s) => `cfg:${s}`)];
           else {
             const [ch, svc] = key.split(':') as ['metrics' | 'logs' | 'traces', string];
             want = [...inc.fx.services[svc][ch]];

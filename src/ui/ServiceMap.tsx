@@ -7,7 +7,7 @@ const PAD = 10;
 
 /** Compact fits the sidebar; expanded has room for full names and larger text. */
 const SIZES = {
-  compact: { w: 132, h: 40, gapX: 44, gapY: 14, maxChars: 17 },
+  compact: { w: 150, h: 46, gapX: 56, gapY: 16, maxChars: 19 },
   expanded: { w: 190, h: 52, gapX: 70, gapY: 22, maxChars: 40 },
 };
 
@@ -56,13 +56,11 @@ export function ServiceMap({ topology, alerts, selected, queried, onSelect, expa
       role="img"
       aria-label="Service dependency map"
     >
-      {expanded && (
-        <defs>
-          <marker id={markerId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" className="arrow" />
-          </marker>
-        </defs>
-      )}
+      <defs>
+        <marker id={markerId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth={expanded ? 7 : 6} markerHeight={expanded ? 7 : 6} orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" className="arrow" />
+        </marker>
+      </defs>
       {topology.services.flatMap((s) =>
         s.deps.map((d) => {
           const a = layout.pos[s.id];
@@ -77,7 +75,7 @@ export function ServiceMap({ topology, alerts, selected, queried, onSelect, expa
               key={`${s.id}-${d}`}
               className="edge"
               d={`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`}
-              markerEnd={expanded ? `url(#${markerId})` : undefined}
+              markerEnd={`url(#${markerId})`}
             />
           );
         }),
@@ -105,10 +103,10 @@ export function ServiceMap({ topology, alerts, selected, queried, onSelect, expa
           >
             <title>{`${s.id} (${KIND_LONG[s.kind]})${alerting ? ': PAGING' : ''}`}</title>
             <rect width={W} height={H} rx={7} />
-            <text x={10} y={expanded ? 22 : 17} className="node-name">
+            <text x={10} y={expanded ? 22 : 20} className="node-name">
               {name}
             </text>
-            <text x={10} y={expanded ? 40 : 31} className="node-kind">
+            <text x={10} y={expanded ? 40 : 37} className="node-kind">
               {expanded ? KIND_LONG[s.kind] : KIND_LABEL[s.kind]}
               {seen.length ? `  · ${seen.map((c) => c[0].toUpperCase()).join('')}` : ''}
             </text>
@@ -119,4 +117,34 @@ export function ServiceMap({ topology, alerts, selected, queried, onSelect, expa
     </svg>
   );
   return expanded ? <div className="map-scroll">{svg}</div> : svg;
+}
+
+/** The same services as a wrapping list of buttons, shown instead of the diagram on narrow screens. */
+export function ServiceChips({ topology, alerts, selected, queried, onSelect }: Omit<Props, 'expanded'>) {
+  return (
+    <div className="service-chips" role="group" aria-label="Services">
+      {topology.services.map((s) => {
+        const seen = (['metrics', 'logs', 'traces'] as const)
+          .filter((c) => queried.has(`${c}:${s.id}`))
+          .map((c) => c[0].toUpperCase())
+          .join('');
+        return (
+          <button
+            key={s.id}
+            className={`chip ${alerts.has(s.id) ? 'alerting' : ''} ${selected === s.id ? 'selected' : ''}`}
+            aria-pressed={selected === s.id}
+            onClick={() => onSelect(s.id)}
+          >
+            {alerts.has(s.id) && <i className="dot" aria-hidden="true" />}
+            {s.id}
+            <small>
+              {KIND_LABEL[s.kind]}
+              {seen ? ` · ${seen}` : ''}
+            </small>
+            {s.deps.length > 0 && <small className="calls">→ {s.deps.join(', ')}</small>}
+          </button>
+        );
+      })}
+    </div>
+  );
 }

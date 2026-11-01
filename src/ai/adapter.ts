@@ -57,6 +57,11 @@ export interface Profile {
   daily?: { date: string; won: boolean; playerMttr: number | null; aiMttr: number; share: string };
   streak: Streak;
   dailyStats: DailyStats;
+  /** Set once the guided first incident has been finished. */
+  tutorialDone?: boolean;
+  /** Your best on-call shift: most incidents solved, then fastest total time. */
+  bestShift?: { solved: number; total: number; date: string };
+  shifts?: number;
 }
 
 export function newProfile(): Profile {
@@ -122,6 +127,8 @@ export function recordMatch(profile: Profile, rec: MatchRecord): { profile: Prof
 
 /** The fault type you currently do worst on (by posterior mean), once you've seen it at least once. */
 export function weakestFault(profile: Profile): FaultId | null {
+  // Too few matches to say anything meaningful yet.
+  if (profile.played < 3) return null;
   const seen = FAULT_IDS.filter((f) => profile.faults[f].played > 0);
   if (!seen.length) return null;
   return seen.reduce((w, f) => {

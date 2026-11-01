@@ -8,20 +8,32 @@ import type { Mode } from '../sim/types';
 interface Props {
   profile: Profile;
   onPlay: (mode: Mode) => void;
+  onTutorial: () => void;
   onDaily: () => void;
+  onShift: (mode: Mode) => void;
   onOpenGuide: () => void;
   onImport: (json: string) => void;
   onExport: () => void;
   onReset: () => void;
 }
 
+/** Titles earned by solving different kinds of incident. */
+const RANKS: [number, string][] = [
+  [23, 'Principal SRE'],
+  [19, 'Staff SRE'],
+  [12, 'Senior SRE'],
+  [7, 'On-call engineer'],
+  [3, 'Responder'],
+  [0, 'Pager rookie'],
+];
+
 const MODE_INFO: Record<Mode, { title: string; blurb: string }> = {
-  easy: { title: 'Easy', blurb: 'One red herring. A patient AI.' },
-  normal: { title: 'Normal', blurb: 'Coincidental deploys and noisy logs.' },
-  hard: { title: 'Hard', blurb: 'Three red herrings. A ruthless AI.' },
+  easy: { title: 'Easy', blurb: 'A smaller system, one red herring and a coach by your side.' },
+  normal: { title: 'Normal', blurb: 'A bigger system, coincidental deploys and noisy logs.' },
+  hard: { title: 'Hard', blurb: 'Three red herrings, and a signal goes missing. A ruthless AI.' },
 };
 
-export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport, onReset }: Props) {
+export function Home({ profile, onPlay, onTutorial, onDaily, onShift, onOpenGuide, onImport, onExport, onReset }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const placement = profile.played < PLACEMENT_MATCHES;
   const weakest = weakestFault(profile);
@@ -31,6 +43,8 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
   const streak = streakView(profile.streak, todayKey());
   const ds = profile.dailyStats;
   const pct = (n: number) => (ds.played ? `${Math.round((n / ds.played) * 100)}%` : '–');
+  const solvedKinds = FAULT_IDS.filter((f) => profile.faults[f].solved > 0).length;
+  const rank = RANKS.find(([min]) => solvedKinds >= min)![1];
 
   return (
     <div className="home">
@@ -40,10 +54,29 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
           Sher<span>log</span>
         </h1>
         <p className="tagline">
-          Production is on fire. You and an AI investigator get the same dashboards: metrics, logs, traces, deploys. Every query costs
-          time. First to name the root cause wins. <b>The AI adapts to how well you do</b> and serves more of the incidents you're weakest at, so every one stays a fight.
+          Production is on fire. You and an AI investigator get the same dashboards: metrics, logs, traces and the change log. Every
+          query costs time. First to find the root cause and fix it wins. <b>The AI adapts to how well you do</b> and serves more of the incidents you're weakest at, so every one stays a fight.
         </p>
+        <div className="hero-cta">
+          {profile.tutorialDone ? (
+            <button className="primary big" onClick={() => onPlay('normal')}>
+              ▶ Play an incident
+            </button>
+          ) : (
+            <>
+              <button className="primary big" onClick={onTutorial}>
+                ▶ Start the 2-minute training
+              </button>
+              <button className="big" onClick={() => onPlay('normal')}>
+                Skip, I'm on-call already
+              </button>
+            </>
+          )}
+        </div>
         <p className="sub">free · runs entirely in your browser · no server, no account, no API keys, no tracking</p>
+        {!profile.tutorialDone && (
+          <img className="hero-demo" src={`${import.meta.env.BASE_URL}demo.gif`} alt="A recording of an incident being solved: paged services, dashboards, the root cause and the fix" width="960" height="540" loading="lazy" />
+        )}
       </section>
 
       {placement && (
@@ -63,6 +96,19 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
             </div>
           </button>
         ))}
+        <button className="mode-card shift" onClick={() => onShift('normal')}>
+          <h2>On-call shift</h2>
+          <p>Three incidents back to back. Your total time against the AI's.</p>
+          <div className="mode-meta">
+            {profile.bestShift ? (
+              <span>
+                best: {profile.bestShift.solved}/3 solved · {fmt(profile.bestShift.total)}
+              </span>
+            ) : (
+              <span>normal mode · 3 incidents</span>
+            )}
+          </div>
+        </button>
         <button className="mode-card daily" onClick={onDaily} disabled={!!dailyDone}>
           <h2>Daily incident</h2>
           <p>Same incident, same AI, for everyone today. Share your trail.</p>
@@ -89,15 +135,18 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
           <ol className="howto">
             <li>The <b>service map</b> shows what is paging. Paging services are usually victims, not the cause.</li>
             <li>
-              Pull <b>metrics</b> (10s), <b>logs</b> (15s), <b>traces</b> (20s) or the <b>deploy log</b> (5s). Your clock is real time
+              Pull <b>metrics</b> (10s), <b>logs</b> (15s), <b>traces</b> (20s) or the <b>change log</b> (5s). Your clock is real time
               plus query costs.
             </li>
             <li>
-              <b>Declare</b> the service and fault. A wrong answer adds 20s, and each further miss costs 20s more, so guessing doesn't pay.
+              <b>Declare</b> the service and fault. A wrong answer adds 20s, and each further miss costs 20s more, so guessing doesn't pay. Then <b>choose the fix</b> that stops the bleeding: a wrong fix costs time too.
             </li>
             <li>The <b>postmortem</b> replays your path next to the AI's, so you see exactly where it was smarter.</li>
           </ol>
-          <button onClick={onOpenGuide}>📘 Open the field guide (6 fault types)</button>
+          <div className="row-buttons">
+            <button onClick={onOpenGuide}>📘 Open the field guide ({FAULT_IDS.length} fault types)</button>
+            {profile.tutorialDone && <button onClick={onTutorial}>Replay the training</button>}
+          </div>
         </section>
 
         <section className="card">
@@ -114,6 +163,9 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
                     · weakest: <b>{FAULTS[weakest].name}</b>
                   </>
                 )}
+              </p>
+              <p className="rank">
+                🏅 {rank} · incident codex {solvedKinds}/{FAULT_IDS.length}
               </p>
               {ds.played > 0 && (
                 <div className="daily-stats" aria-label="Daily incident stats">
@@ -147,7 +199,7 @@ export function Home({ profile, onPlay, onDaily, onOpenGuide, onImport, onExport
                     <li key={f}>
                       <span>{FAULTS[f].name}</span>
                       <div className="bar">
-                        <div style={{ width: `${Math.round(mean * 100)}%` }} />
+                        <div style={{ width: `${s.played ? Math.round(mean * 100) : 0}%` }} />
                       </div>
                       <small>
                         {s.played ? `${s.played} played${s.avgMttr !== null ? ` · ${fmt(s.avgMttr)} avg` : ''}` : 'not seen yet'}

@@ -14,7 +14,30 @@ export interface Topology {
   callers: Record<string, string[]>;
 }
 
-export type FaultId = 'memory_leak' | 'db_pool' | 'bad_deploy' | 'cache_stampede' | 'retry_storm' | 'dns_failure';
+export type FaultId =
+  | 'memory_leak'
+  | 'db_pool'
+  | 'bad_deploy'
+  | 'cache_stampede'
+  | 'retry_storm'
+  | 'dns_failure'
+  | 'thread_pool'
+  | 'slow_third_party'
+  | 'certificate_expiry'
+  | 'disk_full'
+  | 'poison_message'
+  | 'config_flag'
+  | 'partial_zone'
+  | 'traffic_spike'
+  | 'perf_regression'
+  | 'rate_limited'
+  | 'noisy_neighbour'
+  | 'gc_pause'
+  | 'clock_skew'
+  | 'lock_contention'
+  | 'runaway_job'
+  | 'deploy_retry_storm'
+  | 'silent_failure';
 
 export type Channel = 'metrics' | 'logs' | 'traces';
 export type QueryKey = `${Channel}:${string}` | 'deploys';
@@ -37,6 +60,8 @@ export interface Fx {
   services: Record<string, ServiceEffects>;
   /** Services that shipped a deploy right around incident onset. */
   deploys: Set<string>;
+  /** Services that had a config or feature-flag change right around incident onset. */
+  configs: Set<string>;
 }
 
 export interface MetricSeries {
@@ -70,6 +95,8 @@ export interface DeployEvent {
   service: string;
   version: string;
   author: string;
+  /** A config or flag flip, as opposed to a code deploy. */
+  kind?: 'deploy' | 'config';
 }
 
 export interface IncidentData {
@@ -87,5 +114,7 @@ export interface Incident {
   /** The true symptoms including red herrings (used by tests and the postmortem, never by the AI). */
   fx: Fx;
   herrings: string[];
+  /** Alerts that fire but have nothing to do with the incident. */
+  noise: string[];
   data: IncidentData;
 }

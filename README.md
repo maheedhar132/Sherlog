@@ -2,7 +2,7 @@
 
 # 🔍 Sherlog
 
-**An on-call detective game. Production is on fire: race an AI to the root cause.**
+**An on-call detective game. Production is on fire: race an AI to the root cause, then fix it.**
 
 ### [▶ Play now at sherlog-five.vercel.app](https://sherlog-five.vercel.app/)
 
@@ -16,14 +16,25 @@ free · runs entirely in your browser · no account · no API keys · no LLM
 
 </div>
 
-You get paged: latency is burning the SLO. You and an AI investigator see **the same dashboards**: a service map, metrics, logs, traces and a deploy log. Every query costs time. The first to name the **root cause** (the service *and* the fault) wins. Then a postmortem replays your path next to the AI's reasoning.
+You get paged: latency is burning the SLO. You and an AI investigator see **the same dashboards**: a service map, metrics, logs, traces and a change log. Every query costs time. The first to name the **root cause** (the service *and* the fault) and **choose the fix** wins. Then a postmortem replays your path next to the AI's reasoning.
 
 | | | |
 |:---:|:---:|:---:|
-| ![Investigating a cache with metrics](docs/screens/match.png) | ![The expanded service map](docs/screens/expanded.png) | ![The postmortem with the AI's reasoning](docs/screens/postmortem.png) |
-| Investigate | Read the topology | Compare with the AI |
+| ![Investigating a vendor rate limit](docs/screens/match.png) | ![Choosing the fix after the diagnosis](docs/screens/fix.png) | ![The postmortem with the AI's belief and reasoning](docs/screens/postmortem.png) |
+| Investigate | Choose the fix | Compare with the AI |
 
 Incidents are generated from a seed (random service graph, culprit, noise and red herrings), so there is always a new one, plus a **daily** that is the same for everyone.
+
+- **23 kinds of failure**, from memory leaks and retry storms to expired certificates, full disks, GC pauses, clock skew, lock contention, runaway batch jobs, a bad deploy that triggers a retry storm, a service failing behind a healthy-looking dashboard, vendor rate limits and stuck queue consumers. Some page nobody at all, and one is just real demand where scaling out is the right fix.
+- **Diagnose, then fix.** Pick the mitigation that actually stops the bleeding; the postmortem explains why the tempting ones don't work.
+- **A race track.** Watch you and the AI move from paged to mitigated while an SLO error budget burns (the AI's run is precomputed and replayed against your clock). Every result shares a link to the exact incident, so a friend can try to beat it.
+- **Peek at the rival.** Pay 30 seconds to see which service the AI suspects most right now. Is it worth it?
+- **Watch the fix work.** Your chosen fix plays out on a latency chart: a cure recovers, a stopgap dips and climbs back.
+- **Stopgaps.** Some fixes only buy a minute. Pick the one that removes the cause.
+- **Aftershocks.** Fix one failure and a second, unrelated one can surface on the same system.
+- **On-call shift.** Three incidents in a row, scored together, with a personal best to beat.
+- **Something to collect.** An incident codex and on-call ranks track the kinds of failure you have solved. Hard has no runbook: the field guide and the coach are locked.
+- **Built to be learned from.** A 2-minute guided training, an optional coach that explains what each signal usually means, and hints that cost time.
 
 ## Is the AI real?
 
@@ -39,12 +50,12 @@ It is also honest about its limits: it shares the simulator's symptom table (wri
 
 | Mode | Target | Notes |
 |---|---|---|
-| Easy | you win ~70% | 1 red herring |
-| Normal | you win ~50% | 2 red herrings, coincidental deploys |
-| Hard | you win ~30% | 3 red herrings |
+| Easy | you win ~70% | smaller system, 1 red herring, coach on |
+| Normal | you win ~50% | 2 red herrings, coincidental deploys and config changes |
+| Hard | you win ~30% | bigger system, 3 red herrings, one signal on the culprit goes missing, no field guide or coach |
 | Daily | fixed AI | same incident and AI for everyone, with a streak |
 
-Metrics cost 10 s, logs 15 s, traces 20 s, deploys 5 s. A wrong answer costs 20 s, then 40 s, then 60 s, so guessing does not pay. After each match the AI's strength moves toward your target win rate, and you see more of the incident types you are weakest at. The targets are tuned on simulated players so far, so real-player feedback is welcome.
+Metrics cost 10 s, logs 15 s, traces 20 s, the change log 5 s and a hint 15 s. A wrong answer or a wrong fix costs 20 s, then 40 s, then 60 s, so guessing does not pay. After each match the AI's strength moves toward your target win rate, and you see more of the incident types you are weakest at. The targets are tuned on simulated players so far, so real-player feedback is welcome.
 
 ## Your profile and daily streaks
 
@@ -69,12 +80,12 @@ npm run dev
 
 PRs are welcome: fork, branch, open a PR. `main` is protected, CI must pass and every PR is reviewed, with a Vercel preview so reviewers can play your change. Read **[CONTRIBUTING.md](CONTRIBUTING.md)** first.
 
-The best contribution is a **new fault type**: one entry in [`src/sim/faults.ts`](src/sim/faults.ts) (where it can happen, its symptoms, a postmortem story). Ideas: certificate expiry, disk full, clock skew, thread-pool exhaustion, a bad feature flag, Kafka consumer lag.
+The best contribution is a **new fault type**: an entry in [`src/sim/faults.ts`](src/sim/faults.ts) (where it can happen, its symptoms, a postmortem story) and one in [`src/sim/fixes.ts`](src/sim/fixes.ts) (the right mitigation and why the tempting ones fail). Ideas: clock skew, autoscaling lag, a hot shard, a split brain, multi-region cascades.
 
 ## Roadmap
 
 - [ ] Debugging-style insights: which dashboards you open first, and when you declare too early
-- [ ] More fault types and multi-fault incidents
+- [ ] Multi-fault incidents and more fault types
 - [ ] Installable PWA that works offline
 - [ ] An optional local-LLM coach for the postmortem (off by default; the game stays LLM-free)
 

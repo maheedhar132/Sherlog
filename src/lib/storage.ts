@@ -13,6 +13,7 @@ function hydrate(p: Profile): Profile {
   return {
     ...newProfile(),
     ...p,
+    faults: { ...newProfile().faults, ...p.faults },
     streak: { current, best: Math.max(count(s?.best), current), last },
     dailyStats: { played: count(d?.played), solved: count(d?.solved), won: count(d?.won) },
   };
@@ -26,6 +27,24 @@ export function loadProfile(): Profile {
     return p.v === 1 ? hydrate(p) : newProfile();
   } catch {
     return newProfile();
+  }
+}
+
+/** Whether the in-match coach is on: null until the player chooses. */
+export function loadCoachPref(): boolean | null {
+  try {
+    const v = localStorage.getItem('sherlog.coach');
+    return v === null ? null : v === 'on';
+  } catch {
+    return null;
+  }
+}
+
+export function saveCoachPref(on: boolean): void {
+  try {
+    localStorage.setItem('sherlog.coach', on ? 'on' : 'off');
+  } catch {
+    // Storage unavailable: the choice just won't persist.
   }
 }
 
