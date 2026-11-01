@@ -75,6 +75,7 @@ export const FIX_FOR: Record<FaultId, { fix: FixId; why: string }> = {
   silent_failure: { fix: 'restart', why: 'The process is wedged and its exporter is dead. Restarting brings both back, and the real bug can then be fixed. Rolling back would change nothing because nothing was deployed, and scaling out spreads a broken process.' },
   deploy_retry_storm: { fix: 'rollback', why: 'The release started it, so rolling it back stops both the errors and the retries. Shedding load or adding backoff treats the amplification while the bad code keeps failing.' },
   noisy_neighbour: { fix: 'move_node', why: 'CPU is saturated without extra traffic, so another workload on the node is taking it. Move to a different node. Scaling out onto the same node would not help.' },
+  multi_region_cascade: { fix: 'shed_load', why: 'The receiving region is already overloaded. Shed low-priority work and limit the failover traffic before its callers start failing too; failing over again would only move the cascade.' },
 };
 
 /** A tempting fix that genuinely helps for a minute but leaves the cause in place. Not every fault has one. */
@@ -91,6 +92,7 @@ export const STOPGAP_FOR: Partial<Record<FaultId, { fix: FixId; why: string }>> 
   lock_contention: { fix: 'scale_out', why: 'More callers do not help: they only queue behind the same lock, though a few get lucky for a moment.' },
   runaway_job: { fix: 'scale_out', why: 'More replicas absorb some of the job load for a while, but the job still takes everything it is given.' },
   noisy_neighbour: { fix: 'scale_out', why: 'Some new replicas land on quiet nodes, but the noisy node keeps degrading the ones on it.' },
+  multi_region_cascade: { fix: 'scale_out', why: 'Adding capacity in the receiving region can ease the pressure briefly, but the primary region’s full load will keep arriving until failover traffic is limited.' },
 };
 
 /** Four options, one correct (and a stopgap where the fault has one), in a stable order for a given incident. */

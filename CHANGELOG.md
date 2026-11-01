@@ -6,6 +6,7 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 
 ### Added
 
+- **Multi-region cascade fault:** a regional failover overloads the receiving region, with rising traffic, latency and errors plus load-shedding signals. The recommended response is to shed noncritical work and limit failover traffic before the outage spreads.
 - **Eleven new fault types** (17 in all): thread pool exhaustion, slow third-party API, certificate expiry, disk full, stuck queue consumer (a poison message), a bad config or feature flag, a partial zone failure, a legitimate traffic spike (where scaling out is the right fix), a performance regression, a vendor rate limit and a noisy neighbour. They add disk and consumer-lag metrics, TLS, disk, config, zone and rate-limit log signals, and config flips in the change log. Some of them page nobody.
 - **A mitigation step.** After the diagnosis, choose the fix that stops the bleeding. A wrong fix costs time, the AI applies the fix too, and the postmortem explains the right one.
 - **Guided 2-minute training**, an optional **coach** that explains what each signal usually means (it reads only what you have opened), and **hints** that cost 15 s.

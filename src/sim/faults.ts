@@ -511,6 +511,26 @@ export const FAULTS: Record<FaultId, FaultDef> = {
       }
     },
   },
+
+  multi_region_cascade: {
+    id: 'multi_region_cascade',
+    name: 'Multi-region cascade',
+    short: 'Failover overloads the receiving region and spreads the outage',
+    targets: ['app'],
+    story: (s) =>
+      `A regional failure sent the primary region's traffic to ${s} in a secondary region. The receiving region had too little spare capacity, so its queues filled and it began shedding requests; callers across regions then timed out too.`,
+    signals: [
+      'Traffic jumps on the receiving region as failover begins',
+      'Its latency and errors rise while logs report load shedding or a full queue',
+      'The receiving region has the slow span; callers time out behind it',
+    ],
+    tip: 'A failover can move an outage instead of ending it. Shed noncritical work and limit failover traffic until the receiving region has safe headroom.',
+    effects: (_t, s, fx) => {
+      addFx(fx, s, 'metrics', 'rps_up', 'cpu_up', 'lat_up', 'err_up');
+      addFx(fx, s, 'logs', 'log_overload');
+      addFx(fx, s, 'traces', 'tr_self_slow');
+    },
+  },
 };
 
 export const FAULT_IDS = Object.keys(FAULTS) as FaultId[];
