@@ -4,6 +4,10 @@ All notable changes to Sherlog are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Added
+
+- **Multi-region cascade fault:** a regional failover overloads the receiving region. Its failover log identifies the region shift, while caller logs show cross-region timeouts as the outage spreads. Shed noncritical work and limit failover traffic before the receiving region runs out of headroom.
+
 ## [1.2.0] - 2026-11-01
 
 The full incident lifecycle: 23 fault types, a mitigation step, guided training, aftershocks, on-call shifts and a race track.

@@ -16,7 +16,7 @@ free · runs entirely in your browser · no account · no API keys · no LLM
 
 </div>
 
-You get paged: latency is burning the SLO. You and an AI investigator see **the same dashboards**: a service map, metrics, logs, traces and a change log. Every query costs time. The first to name the **root cause** (the service *and* the fault) and **choose the fix** wins. Then a postmortem replays your path next to the AI's reasoning.
+You get paged: latency is burning the SLO. You and an AI investigator see **the same dashboards**: a service map, metrics, logs, traces and a change log. Every query costs time. The first to name the **root cause** (the service *and* the fault) and **choose the fix** wins. Then a postmortem replays your path next to the AI's reasoning. There are 24 fault types, including a multi-region cascade with visible failover and caller-timeout evidence.
 
 | | | |
 |:---:|:---:|:---:|
@@ -80,7 +80,7 @@ npm run dev
 
 PRs are welcome: fork, branch, open a PR. `main` is protected, CI must pass and every PR is reviewed, with a Vercel preview so reviewers can play your change. Read **[CONTRIBUTING.md](CONTRIBUTING.md)** first.
 
-The best contribution is a **new fault type**: an entry in [`src/sim/faults.ts`](src/sim/faults.ts) (where it can happen, its symptoms, a postmortem story) and one in [`src/sim/fixes.ts`](src/sim/fixes.ts) (the right mitigation and why the tempting ones fail). Ideas: clock skew, autoscaling lag, a hot shard, a split brain, multi-region cascades.
+The best contribution is a **new fault type**: an entry in [`src/sim/faults.ts`](src/sim/faults.ts) (where it can happen, its symptoms, a postmortem story) and one in [`src/sim/fixes.ts`](src/sim/fixes.ts) (the right mitigation and why the tempting ones fail). Ideas: autoscaling lag, a hot shard, a split brain.
 
 ## Roadmap
 

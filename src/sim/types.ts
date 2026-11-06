@@ -37,7 +37,8 @@ export type FaultId =
   | 'lock_contention'
   | 'runaway_job'
   | 'deploy_retry_storm'
-  | 'silent_failure';
+  | 'silent_failure'
+  | 'multi_region_cascade';
 
 export type Channel = 'metrics' | 'logs' | 'traces';
 export type QueryKey = `${Channel}:${string}` | 'deploys';

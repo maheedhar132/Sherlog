@@ -22,6 +22,27 @@ describe('incident generation', () => {
     }
   });
 
+  it('distinguishes a multi-region cascade from a traffic spike and shows its caller stage', () => {
+    const cascade = Array.from({ length: 100 }, (_, seed) =>
+      generateIncident({ seed, mode: 'normal', fault: 'multi_region_cascade' }),
+    ).find((inc) => inc.topology.callers[inc.truth.service].length > 0);
+    if (!cascade) throw new Error('expected a generated cascade with at least one caller');
+
+    const targetLogs = observe(cascade, `logs:${cascade.truth.service}`);
+    expect(targetLogs.has('log_failover')).toBe(true);
+
+    const caller = cascade.topology.callers[cascade.truth.service][0];
+    expect(observe(cascade, `logs:${caller}`).has('log_cross_region_timeout')).toBe(true);
+
+    const spike = generateIncident({ seed: cascade.seed, mode: 'normal', fault: 'traffic_spike' });
+    expect(observe(spike, `logs:${spike.truth.service}`).has('log_failover')).toBe(false);
+    expect(
+      spike.topology.services.some((service) =>
+        observe(spike, `logs:${service.id}`).has('log_cross_region_timeout'),
+      ),
+    ).toBe(false);
+  });
+
   it('detection reads back exactly the symptoms that were rendered', () => {
     for (const mode of MODES) {
       for (let seed = 0; seed < 150; seed++) {

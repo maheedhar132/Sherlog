@@ -8,6 +8,10 @@ import { generateIncident, hypotheses, sameHypothesis } from '../src/sim/inciden
 import type { Mode } from '../src/sim/types';
 
 describe('AI investigator', () => {
+  it('registers the multi-region cascade in the every-fault AI coverage', () => {
+    expect(FAULT_IDS).toContain('multi_region_cascade');
+  });
+
   it('always ends with the correct root cause', () => {
     for (let seed = 0; seed < 50; seed++) {
       const inc = generateIncident({ seed, mode: 'hard', fault: FAULT_IDS[seed % FAULT_IDS.length] });

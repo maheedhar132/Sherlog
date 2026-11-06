@@ -210,6 +210,18 @@ const FEATURE_LOGS: Record<string, (c: Ctx) => [LogLevel, string]> = {
       ['ERROR', 'deadlock detected while updating relation "orders"'],
     ] as [LogLevel, string][]),
   log_cron: ({ rng }) => ['INFO', `cron job "${pick(rng, ['nightly-reindex', 'rebuild-search', 'recompute-stats'])}" started (concurrency unlimited)`],
+  log_failover: ({ s, rng }) => {
+    const [from, to] = pick(rng, [
+      ['us-east-1', 'eu-west-1'],
+      ['eu-west-1', 'us-east-1'],
+      ['ap-southeast-1', 'eu-central-1'],
+    ]);
+    return ['WARN', `regional failover activated: ${from} traffic shifted to ${to} for ${s.id}`];
+  },
+  log_cross_region_timeout: (c) => {
+    const target = depWhere(c, (m) => m.has('err_up'));
+    return ['ERROR', `cross-region caller ${c.s.id} timed out waiting for ${target} after failover traffic shifted regions (deadline exceeded)`];
+  },
   log_config: ({ rng }) => ['WARN', `config change applied: flag "${pick(rng, ['new-pricing', 'fast-checkout', 'v2-search', 'promo-banner'])}" set to on by ${pick(rng, AUTHORS)}`],
   log_poison: ({ rng }) => ['ERROR', `failed to process message offset=${randInt(rng, 100000, 999999)} (attempt 5/5), will retry: invalid payload`],
   log_dns: (c) => {

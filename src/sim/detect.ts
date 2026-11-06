@@ -70,6 +70,8 @@ const LOG_PATTERNS: [string, RegExp][] = [
   ['log_clock', /clock skew|issued in the future/],
   ['log_lock', /waiting for ExclusiveLock|deadlock detected/],
   ['log_cron', /cron job .* started/],
+  ['log_failover', /regional failover activated: .* traffic shifted to .* for .+/],
+  ['log_cross_region_timeout', /cross-region caller .* timed out waiting for .* after failover traffic shifted regions/],
   ['log_poison', /failed to process message/],
   ['log_upstream_timeout', /timed out after|deadline exceeded/],
   ['log_upstream_error', /returned 5\d\d|Bad Gateway/],
